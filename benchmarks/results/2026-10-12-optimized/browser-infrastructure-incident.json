@@ -1,0 +1,13 @@
+{
+  "kind": "external_browser_disappeared",
+  "affected_case": "website-baseline",
+  "stage": 2,
+  "subject_completed": true,
+  "usage_preserved": true,
+  "model_rerun": false,
+  "failed_grader_log": "cases/website-baseline/grader-2-chrome-infrastructure-failure.log",
+  "resolution": "Use installed Chromium-based Microsoft Edge for every external primary assessment, including uniform reassessment of the first snapshot. Model prompts unchanged; Chrome unavailable in later coding jobs. Earlier jobs also could not use Chrome because the sandbox aborted it. This environment change is a comparison limitation, not a product defect. No application was installed or restored globally.",
+  "chrome_grader_sha256": "14987817f538689f3b5901faff68c7d205861fa87b6744e90befb83fa57bd0f0",
+  "edge_grader_sha256": "7caf41077e62b893ed34d443427e4723c3da97bf54df8d7dc44a193f6ac275af",
+  "only_code_change": "External chromium.launch channel chrome -> msedge; all requirement assertions unchanged."
+}

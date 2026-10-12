@@ -1,0 +1,31 @@
+{
+  "plugin_version": "2.4.0",
+  "measured_commit": "8c1aae8",
+  "runtime_tests": {
+    "passed": 40,
+    "total": 40,
+    "elapsed_seconds": 18.385,
+    "command": "python3 scripts/test_session.py"
+  },
+  "installer_tests": {
+    "passed": 16,
+    "total": 16,
+    "elapsed_seconds": 1.185,
+    "command": "python3 scripts/test_workflow.py"
+  },
+  "skill_validation": {
+    "passed": 4,
+    "total": 4,
+    "command": "./scripts/verify.sh"
+  },
+  "shared_source_validation": "python3 scripts/workflow.py check: passed",
+  "shell_portability": "./scripts/test-portability.sh: passed on macOS",
+  "claude_manifest_validation": "passed; README marketplace installation suggestion only",
+  "instruction_size_bytes": {
+    "old_four_entrypoints_and_contract": 26870,
+    "new_four_entrypoints_and_contract": 12859,
+    "new_quickstart": 4117,
+    "new_ordinary_total": 16976
+  },
+  "notes": "Real competing CLI processes exercise begin and batch races; all original 30 safety tests preserved. Native Windows/Linux and cross-host concurrency have not been run. Byte counts are not token measurements. No independent reviewer was used."
+}

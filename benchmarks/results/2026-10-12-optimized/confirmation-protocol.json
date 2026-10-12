@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-12T12:54:28.111723+00:00",
+  "model": "gpt-6.1-sol",
+  "effort": "max",
+  "max_seconds_per_stage": 720,
+  "order": [
+    [
+      "website",
+      "workflow"
+    ],
+    [
+      "website",
+      "baseline"
+    ]
+  ],
+  "repetitions_per_cell": 1,
+  "playwright": "$HOME/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright",
+  "codex_version": "codex-cli 0.162.0-alpha.17.2",
+  "plugin_version": "2.4.0",
+  "plugin_commit": "8c1aae8929200dbe1250946e063c0cfb6b23d27e",
+  "features_disabled": [
+    "plugins",
+    "apps",
+    "memories",
+    "hooks",
+    "multi_agent",
+    "multi_agent_v2",
+    "computer_use",
+    "browser_use",
+    "image_generation"
+  ],
+  "fresh_chats": true,
+  "hidden_grading_feedback": true,
+  "browser_channel": "chrome",
+  "scenario_count": 1,
+  "coding_chats": 4,
+  "reason": "Predeclared second repetition for BOTH website arms after an incomplete provider-capacity observation. Original observation retained, never replaced.",
+  "paired_repetition": 2,
+  "external_grader_browser": "msedge",
+  "browser_environment_note": "Original coding prompts retained; Chrome is absent in both confirmation arms. Browser checks were sandbox-blocked in the original round. External assessments use Edge."
+}

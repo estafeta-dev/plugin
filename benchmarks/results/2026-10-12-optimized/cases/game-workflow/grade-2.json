@@ -1,0 +1,58 @@
+{
+  "scenario": "game",
+  "stage": 2,
+  "passed": 10,
+  "total": 10,
+  "groups": [
+    {
+      "id": "G1",
+      "name": "Initial state copies the supplied deck",
+      "passed": true
+    },
+    {
+      "id": "G2",
+      "name": "Pair match and invalid duplicate flips",
+      "passed": true
+    },
+    {
+      "id": "G3",
+      "name": "Mismatch lock, resolution and move count",
+      "passed": true
+    },
+    {
+      "id": "G4",
+      "name": "Win and full restart reset",
+      "passed": true
+    },
+    {
+      "id": "G8",
+      "name": "Paused state prevents flips and mismatch resolution",
+      "passed": true
+    },
+    {
+      "id": "G9",
+      "name": "Best score only updates for a completed valid game",
+      "passed": true
+    },
+    {
+      "id": "UI1",
+      "name": "Mobile layout and labelled usable controls",
+      "passed": true
+    },
+    {
+      "id": "G5",
+      "name": "UI tile interaction updates completed-attempt count",
+      "passed": true
+    },
+    {
+      "id": "G6",
+      "name": "UI restart clears moves and pending mismatch",
+      "passed": true
+    },
+    {
+      "id": "G10",
+      "name": "UI pause blocks input and restart resumes",
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "reason": "Two evaluator defects corrected without modifying product code: read browser document location instead of asynchronously cached Playwright page.url; memory game has button controls and need not contain input/select/textarea. Website/app form-label checks unchanged. Apply the same corrected grader to every snapshot.",
+  "changed_groups": [
+    "W11",
+    "UI1 (game only)"
+  ],
+  "original_sha256": "268bea5e7bd318ca1d2fafdf13c7aa8c7ce0a387634da511ce399cd6e8d798e9",
+  "corrected_sha256": "14987817f538689f3b5901faff68c7d205861fa87b6744e90befb83fa57bd0f0"
+}

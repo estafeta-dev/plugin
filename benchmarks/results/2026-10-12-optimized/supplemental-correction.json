@@ -1,0 +1,9 @@
+{
+  "original_result": "extra-checks-original-assumption.json",
+  "original_passed": 7,
+  "original_total": 8,
+  "cause": "Test assumed UI IDs/symbols equal deck.json; TASK.md requires valid deck semantics and data-card-id buttons but does not require using the fixture deck in the UI. Workflow UI uses stable IDs0-0 etc and valid four symbol pairs.",
+  "correction": "Discover symbols through keyboard play, restart, then complete known pairs in four moves. Apply same corrected eight-check set to both current arms and both historical arms. No products, model measurements or primary assertions changed.",
+  "corrected_grader_sha256": "a5fefdaf2f7fb97d4330db48ad8e6a19491e24037490c1f31dd5ce340ee3ad86",
+  "intermediate_correction": "v2 discovers rendered cards but counted old baseline decorative card numbers/notes as part of the symbol. Preserve historical-supplemental/extra-checks-v2.json; v3 reads its visible face element when present."
+}

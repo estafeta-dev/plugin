@@ -1,0 +1,239 @@
+{
+  "observations": [
+    {
+      "round": "historical",
+      "case": "game-baseline",
+      "stage": 1,
+      "monotonic_seconds": 464.54899720799995,
+      "timestamp_span_seconds": 464.553274,
+      "difference_seconds": 0.004276792000041496
+    },
+    {
+      "round": "historical",
+      "case": "game-baseline",
+      "stage": 2,
+      "monotonic_seconds": 346.9038664579998,
+      "timestamp_span_seconds": 346.908503,
+      "difference_seconds": 0.004636542000184818
+    },
+    {
+      "round": "historical",
+      "case": "website-baseline",
+      "stage": 1,
+      "monotonic_seconds": 648.0629804580001,
+      "timestamp_span_seconds": 648.066076,
+      "difference_seconds": 0.003095541999869056
+    },
+    {
+      "round": "historical",
+      "case": "website-baseline",
+      "stage": 2,
+      "monotonic_seconds": 345.40153933299996,
+      "timestamp_span_seconds": 345.406338,
+      "difference_seconds": 0.004798667000045498
+    },
+    {
+      "round": "historical",
+      "case": "app-workflow",
+      "stage": 1,
+      "monotonic_seconds": 586.2780836669999,
+      "timestamp_span_seconds": 586.284938,
+      "difference_seconds": 0.006854333000092083
+    },
+    {
+      "round": "historical",
+      "case": "app-workflow",
+      "stage": 2,
+      "monotonic_seconds": 555.3506843750001,
+      "timestamp_span_seconds": 555.355799,
+      "difference_seconds": 0.005114624999919215
+    },
+    {
+      "round": "historical",
+      "case": "game-workflow",
+      "stage": 1,
+      "monotonic_seconds": 566.4189974999999,
+      "timestamp_span_seconds": 566.424624,
+      "difference_seconds": 0.005626500000062151
+    },
+    {
+      "round": "historical",
+      "case": "game-workflow",
+      "stage": 2,
+      "monotonic_seconds": 463.7408329589998,
+      "timestamp_span_seconds": 463.747433,
+      "difference_seconds": 0.00660004100018341
+    },
+    {
+      "round": "historical",
+      "case": "website-workflow",
+      "stage": 1,
+      "monotonic_seconds": 697.259618709,
+      "timestamp_span_seconds": 697.267416,
+      "difference_seconds": 0.007797290999974393
+    },
+    {
+      "round": "historical",
+      "case": "website-workflow",
+      "stage": 2,
+      "monotonic_seconds": 716.7139369590002,
+      "timestamp_span_seconds": 716.727815,
+      "difference_seconds": 0.013878040999770747
+    },
+    {
+      "round": "historical",
+      "case": "app-baseline",
+      "stage": 1,
+      "monotonic_seconds": 532.6132953340002,
+      "timestamp_span_seconds": 532.618469,
+      "difference_seconds": 0.00517366599979141
+    },
+    {
+      "round": "historical",
+      "case": "app-baseline",
+      "stage": 2,
+      "monotonic_seconds": 435.58552416600014,
+      "timestamp_span_seconds": 435.590803,
+      "difference_seconds": 0.00527883399985285
+    },
+    {
+      "round": "optimized",
+      "case": "game-baseline",
+      "stage": 1,
+      "monotonic_seconds": 670.9215290840002,
+      "timestamp_span_seconds": 670.92802,
+      "difference_seconds": 0.00649091599973417
+    },
+    {
+      "round": "optimized",
+      "case": "game-baseline",
+      "stage": 2,
+      "monotonic_seconds": 434.70521433299973,
+      "timestamp_span_seconds": 434.726556,
+      "difference_seconds": 0.021341667000285724
+    },
+    {
+      "round": "optimized",
+      "case": "website-baseline",
+      "stage": 1,
+      "monotonic_seconds": 708.1388618330001,
+      "timestamp_span_seconds": 708.145419,
+      "difference_seconds": 0.0065571669998689686
+    },
+    {
+      "round": "optimized",
+      "case": "website-baseline",
+      "stage": 2,
+      "monotonic_seconds": 556.710907791,
+      "timestamp_span_seconds": 556.717532,
+      "difference_seconds": 0.006624209000051451
+    },
+    {
+      "round": "optimized",
+      "case": "app-workflow",
+      "stage": 1,
+      "monotonic_seconds": 662.2827134999998,
+      "timestamp_span_seconds": 662.290272,
+      "difference_seconds": 0.007558500000186541
+    },
+    {
+      "round": "optimized",
+      "case": "app-workflow",
+      "stage": 2,
+      "monotonic_seconds": 604.1196144999994,
+      "timestamp_span_seconds": 604.131167,
+      "difference_seconds": 0.01155250000056185
+    },
+    {
+      "round": "optimized",
+      "case": "game-workflow",
+      "stage": 1,
+      "monotonic_seconds": 688.9379005409999,
+      "timestamp_span_seconds": 688.945091,
+      "difference_seconds": 0.007190459000185001
+    },
+    {
+      "round": "optimized",
+      "case": "game-workflow",
+      "stage": 2,
+      "monotonic_seconds": 574.1518074159999,
+      "timestamp_span_seconds": 574.156584,
+      "difference_seconds": 0.004776584000069306
+    },
+    {
+      "round": "optimized",
+      "case": "website-workflow",
+      "stage": 1,
+      "monotonic_seconds": 562.917420375,
+      "timestamp_span_seconds": 562.924389,
+      "difference_seconds": 0.006968625000013162
+    },
+    {
+      "round": "optimized",
+      "case": "website-workflow",
+      "stage": 2,
+      "monotonic_seconds": 702.819169666,
+      "timestamp_span_seconds": 702.829508,
+      "difference_seconds": 0.01033833400003914
+    },
+    {
+      "round": "optimized",
+      "case": "app-baseline",
+      "stage": 1,
+      "monotonic_seconds": 600.3601806249999,
+      "timestamp_span_seconds": 600.365403,
+      "difference_seconds": 0.0052223750001303415
+    },
+    {
+      "round": "optimized",
+      "case": "app-baseline",
+      "stage": 2,
+      "monotonic_seconds": 606.5513248329999,
+      "timestamp_span_seconds": 606.56303,
+      "difference_seconds": 0.011705167000172878
+    },
+    {
+      "round": "confirmation",
+      "case": "website-baseline",
+      "stage": 1,
+      "monotonic_seconds": 720.049942333,
+      "timestamp_span_seconds": 876.913556,
+      "difference_seconds": 156.86361366699998
+    },
+    {
+      "round": "confirmation",
+      "case": "website-baseline",
+      "stage": 2,
+      "monotonic_seconds": 682.4332521670003,
+      "timestamp_span_seconds": 682.444938,
+      "difference_seconds": 0.011685832999660306
+    },
+    {
+      "round": "confirmation",
+      "case": "website-workflow",
+      "stage": 1,
+      "monotonic_seconds": 720.021284833,
+      "timestamp_span_seconds": 720.027709,
+      "difference_seconds": 0.006424166999977388
+    },
+    {
+      "round": "confirmation",
+      "case": "website-workflow",
+      "stage": 2,
+      "monotonic_seconds": 546.378642042,
+      "timestamp_span_seconds": 546.38607,
+      "difference_seconds": 0.0074279579999938505
+    }
+  ],
+  "differences_over_one_second": [
+    {
+      "round": "confirmation",
+      "case": "website-baseline",
+      "stage": 1,
+      "monotonic_seconds": 720.049942333,
+      "timestamp_span_seconds": 876.913556,
+      "difference_seconds": 156.86361366699998
+    }
+  ],
+  "note": "elapsed_seconds is the monotonic process timer. A calendar timestamp discrepancy is observed in confirmation baseline stage1; cause unverified. No causal speedup claim; website full-budget comparisons remain ineligible."
+}

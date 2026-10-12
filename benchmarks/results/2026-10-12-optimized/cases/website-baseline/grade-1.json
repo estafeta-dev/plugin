@@ -1,0 +1,44 @@
+{
+  "scenario": "website",
+  "stage": 1,
+  "passed": 0,
+  "total": 6,
+  "groups": [
+    {
+      "id": "W1",
+      "name": "Combined search/category/price filters",
+      "passed": false,
+      "error": "Error: Not implemented\n    at Module.filterWorkshops (file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/cases/website-baseline/workspace/catalogue.js:1:43)\n    at file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:27:30\n    at file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:19:96\n    at test (file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:16:15)\n    at core (file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:19:36)\n    at file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:26:9"
+    },
+    {
+      "id": "W2",
+      "name": "Stable sorting and immutable source",
+      "passed": false,
+      "error": "Error: Not implemented\n    at Module.filterWorkshops (file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/cases/website-baseline/workspace/catalogue.js:1:43)\n    at file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:32:46\n    at file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:19:96\n    at test (file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:16:15)\n    at core (file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:19:36)\n    at file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:31:9"
+    },
+    {
+      "id": "W3",
+      "name": "Booking validation rejects invalid fields",
+      "passed": false,
+      "error": "Error: Not implemented\n    at Module.validateBooking (file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/cases/website-baseline/workspace/catalogue.js:2:43)\n    at file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:39:18\n    at file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:19:96\n    at test (file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:16:15)\n    at core (file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:19:36)\n    at file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:38:9"
+    },
+    {
+      "id": "UI1",
+      "name": "Mobile layout and labelled usable controls",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(controls.length>0)\n\n    at file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:166:33\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:472:9)\n    at async file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:159:73\n    at async test (file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:16:9)\n    at async ui (file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:155:5)\n    at async file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:163:3"
+    },
+    {
+      "id": "W4",
+      "name": "UI catalogue filters and empty state",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 6\n\n    at file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:176:14\n    at async file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:159:73\n    at async test (file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:16:9)\n    at async ui (file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:155:5)\n    at async file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:175:5"
+    },
+    {
+      "id": "W5",
+      "name": "UI booking acknowledgement after valid input",
+      "passed": false,
+      "error": "locator.fill: Timeout 3000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#booking-name')\u001b[22m\n\n    at $OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:180:40\n    at $OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:159:79\n    at async test ($OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:16:9)\n    at async ui ($OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:155:5)\n    at async file://$OUTPUTS/session-workflow-website-confirmation-2.4-2026-10-12/grade-edge.mjs:179:5"
+    }
+  ]
+}

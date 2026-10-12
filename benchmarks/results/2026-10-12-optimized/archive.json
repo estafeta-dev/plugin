@@ -1,0 +1,27 @@
+{
+  "archives": [
+    {
+      "file": "session-workflow-benchmark-optimized-2.4-2026-10-12.zip",
+      "bytes": 7471533,
+      "files": 1118,
+      "sha256": "993e8d88304a8c48a9a64afe6f7db56ed03cedf5bd450a257e1e17ffbc317d63",
+      "testzip": "passed",
+      "note": "Local complete raw evidence/source snapshot. Git administration, caches and external historical symlink targets excluded; historical evidence resides in the unchanged prior archive."
+    },
+    {
+      "file": "session-workflow-website-confirmation-2.4-2026-10-12.zip",
+      "bytes": 2723341,
+      "files": 437,
+      "sha256": "0aac02427d0c5ccaeaaa281f0f2db160ba987d3de24ee1478ea182fe18502bdf",
+      "testzip": "passed",
+      "note": "Local complete raw evidence/source snapshot. Git administration, caches and external historical symlink targets excluded; historical evidence resides in the unchanged prior archive."
+    },
+    {
+      "file": "session-workflow-benchmark-pilot-2026-10-12.zip",
+      "bytes": 5984122,
+      "sha256": "2d7f8449d167e041fb03c10843e9d4aa918d1aacafd4b0a55a674e8bd9d9b42a",
+      "unchanged": true
+    }
+  ],
+  "metadata_self_excluded": true
+}

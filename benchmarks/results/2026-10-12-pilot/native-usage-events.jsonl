@@ -1,0 +1,24 @@
+{"case": "website-baseline", "stage": 1, "event": {"type": "thread.started", "thread_id": "01a12d1e-042f-7221-b865-96e20feba3d0"}}
+{"case": "website-baseline", "stage": 1, "event": {"type": "turn.completed", "usage": {"input_tokens": 391791, "cached_input_tokens": 341632, "cache_write_input_tokens": 0, "output_tokens": 32943, "reasoning_output_tokens": 4498}}}
+{"case": "website-baseline", "stage": 2, "event": {"type": "thread.started", "thread_id": "01a12d27-fc49-7fc3-9e8c-80458c50d4b5"}}
+{"case": "website-baseline", "stage": 2, "event": {"type": "turn.completed", "usage": {"input_tokens": 423243, "cached_input_tokens": 368000, "cache_write_input_tokens": 0, "output_tokens": 17622, "reasoning_output_tokens": 4212}}}
+{"case": "website-workflow", "stage": 1, "event": {"type": "thread.started", "thread_id": "01a12d2d-59d8-7c90-97d2-ed4b57ce082e"}}
+{"case": "website-workflow", "stage": 1, "event": {"type": "turn.completed", "usage": {"input_tokens": 994423, "cached_input_tokens": 914304, "cache_write_input_tokens": 0, "output_tokens": 32393, "reasoning_output_tokens": 8057}}}
+{"case": "website-workflow", "stage": 2, "event": {"type": "thread.started", "thread_id": "01a12d38-2556-7d90-b9c1-d097ad1575b8"}}
+{"case": "website-workflow", "stage": 2, "event": {"type": "turn.completed", "usage": {"input_tokens": 927640, "cached_input_tokens": 842240, "cache_write_input_tokens": 0, "output_tokens": 20112, "reasoning_output_tokens": 5046}}}
+{"case": "game-workflow", "stage": 1, "event": {"type": "thread.started", "thread_id": "01a12d43-2db7-7a02-a2f5-cfc0f8a4de9b"}}
+{"case": "game-workflow", "stage": 1, "event": {"type": "turn.completed", "usage": {"input_tokens": 755064, "cached_input_tokens": 689792, "cache_write_input_tokens": 0, "output_tokens": 21764, "reasoning_output_tokens": 5227}}}
+{"case": "game-workflow", "stage": 2, "event": {"type": "thread.started", "thread_id": "01a12d4b-e2f9-7ff2-80c1-02d48d817b90"}}
+{"case": "game-workflow", "stage": 2, "event": {"type": "turn.completed", "usage": {"input_tokens": 1288352, "cached_input_tokens": 1211008, "cache_write_input_tokens": 0, "output_tokens": 20994, "reasoning_output_tokens": 4899}}}
+{"case": "game-baseline", "stage": 1, "event": {"type": "thread.started", "thread_id": "01a12d53-0826-7580-813f-b2a2e82ac685"}}
+{"case": "game-baseline", "stage": 1, "event": {"type": "turn.completed", "usage": {"input_tokens": 244393, "cached_input_tokens": 194560, "cache_write_input_tokens": 0, "output_tokens": 22694, "reasoning_output_tokens": 8076}}}
+{"case": "game-baseline", "stage": 2, "event": {"type": "thread.started", "thread_id": "01a12d5a-3077-7ed3-ad40-1a9888de613d"}}
+{"case": "game-baseline", "stage": 2, "event": {"type": "turn.completed", "usage": {"input_tokens": 355059, "cached_input_tokens": 298624, "cache_write_input_tokens": 0, "output_tokens": 18262, "reasoning_output_tokens": 4963}}}
+{"case": "app-baseline", "stage": 1, "event": {"type": "thread.started", "thread_id": "01a12d5f-8de7-73e0-9566-a5a011078d3e"}}
+{"case": "app-baseline", "stage": 1, "event": {"type": "turn.completed", "usage": {"input_tokens": 292562, "cached_input_tokens": 248320, "cache_write_input_tokens": 0, "output_tokens": 25761, "reasoning_output_tokens": 6082}}}
+{"case": "app-baseline", "stage": 2, "event": {"type": "thread.started", "thread_id": "01a12d67-b917-77f1-b859-f52f84b8d15e"}}
+{"case": "app-baseline", "stage": 2, "event": {"type": "turn.completed", "usage": {"input_tokens": 494228, "cached_input_tokens": 425856, "cache_write_input_tokens": 0, "output_tokens": 16935, "reasoning_output_tokens": 4131}}}
+{"case": "app-workflow", "stage": 1, "event": {"type": "thread.started", "thread_id": "01a12d6e-6a0d-78e2-a84d-c3c01c2af12b"}}
+{"case": "app-workflow", "stage": 1, "event": {"type": "turn.completed", "usage": {"input_tokens": 790023, "cached_input_tokens": 716032, "cache_write_input_tokens": 0, "output_tokens": 26657, "reasoning_output_tokens": 7149}}}
+{"case": "app-workflow", "stage": 2, "event": {"type": "thread.started", "thread_id": "01a12d77-6663-76c3-8d7c-8995f3891d80"}}
+{"case": "app-workflow", "stage": 2, "event": {"type": "turn.completed", "usage": {"input_tokens": 1154569, "cached_input_tokens": 1072128, "cache_write_input_tokens": 0, "output_tokens": 24283, "reasoning_output_tokens": 7805}}}

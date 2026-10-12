@@ -1,0 +1,48 @@
+{
+  "scenario": "app",
+  "stage": 1,
+  "passed": 8,
+  "total": 8,
+  "groups": [
+    {
+      "id": "A1",
+      "name": "Add task defaults, stable ids and invalid input",
+      "passed": true
+    },
+    {
+      "id": "A2",
+      "name": "Atomic edit, move and delete validation",
+      "passed": true
+    },
+    {
+      "id": "A3",
+      "name": "Combined filters preserve insertion order and state",
+      "passed": true
+    },
+    {
+      "id": "A4",
+      "name": "Persistence validation and no future id collision",
+      "passed": true
+    },
+    {
+      "id": "UI1",
+      "name": "Mobile layout and labelled usable controls",
+      "passed": true
+    },
+    {
+      "id": "A5",
+      "name": "UI add, move and delete persist across reload",
+      "passed": true
+    },
+    {
+      "id": "A6",
+      "name": "UI filters and unsafe input remain literal",
+      "passed": true
+    },
+    {
+      "id": "A7",
+      "name": "UI tolerates corrupt stored board",
+      "passed": true
+    }
+  ]
+}

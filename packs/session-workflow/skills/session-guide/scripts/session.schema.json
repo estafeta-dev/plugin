@@ -1,0 +1,560 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Session Workflow runtime interfaces",
+  "description": "The bundled validator implements the keywords used here; no third-party packages are required. State schema 2; schema 1 is upgraded once with a state.v1.json copy.",
+  "$comment": "Machine state is authoritative only for runtime-owned facts; decisions and acceptance remain externally judged.",
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "[A-Za-z0-9][A-Za-z0-9_.-]{0,79}"
+    },
+    "argv": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 16000
+      },
+      "minItems": 1,
+      "maxItems": 200
+    },
+    "phase_input": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "[A-Za-z0-9][A-Za-z0-9_.-]{0,79}"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "acceptance": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 12000
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "[A-Za-z0-9][A-Za-z0-9_.-]{0,79}"
+          },
+          "minItems": 0,
+          "maxItems": 2000
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "minItems": 1,
+          "maxItems": 2000
+        },
+        "required_checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "[A-Za-z0-9][A-Za-z0-9_.-]{0,79}"
+          },
+          "minItems": 0,
+          "maxItems": 2000
+        },
+        "exclude": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "minItems": 0,
+          "maxItems": 2000
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "acceptance"
+      ],
+      "additionalProperties": false
+    },
+    "phase_state": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "[A-Za-z0-9][A-Za-z0-9_.-]{0,79}"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "acceptance": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 12000
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "[A-Za-z0-9][A-Za-z0-9_.-]{0,79}"
+          },
+          "minItems": 0,
+          "maxItems": 2000
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "minItems": 1,
+          "maxItems": 2000
+        },
+        "required_checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "[A-Za-z0-9][A-Za-z0-9_.-]{0,79}"
+          },
+          "minItems": 0,
+          "maxItems": 2000
+        },
+        "state": {
+          "enum": [
+            "TODO",
+            "IN_PROGRESS",
+            "VERIFY",
+            "DONE",
+            "BLOCKED",
+            "NEEDS_DECISION",
+            "DEFERRED"
+          ]
+        },
+        "owner": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "acceptance_note": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "exclude": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "minItems": 0,
+          "maxItems": 2000
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "acceptance",
+        "depends_on",
+        "priority",
+        "paths",
+        "required_checks",
+        "state",
+        "owner",
+        "reason",
+        "acceptance_note",
+        "exclude"
+      ],
+      "additionalProperties": false
+    },
+    "plan": {
+      "type": "object",
+      "properties": {
+        "phases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/phase_input"
+          },
+          "minItems": 1,
+          "maxItems": 2000
+        }
+      },
+      "required": [
+        "phases"
+      ],
+      "additionalProperties": false
+    },
+    "check": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "[A-Za-z0-9][A-Za-z0-9_.-]{0,79}"
+        },
+        "phase": {
+          "type": "string",
+          "pattern": "[A-Za-z0-9][A-Za-z0-9_.-]{0,79}"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "[A-Za-z0-9][A-Za-z0-9_.-]{0,79}"
+        },
+        "result": {
+          "enum": [
+            "running",
+            "pass",
+            "fail",
+            "timeout",
+            "error",
+            "abandoned"
+          ]
+        },
+        "provenance": {
+          "enum": [
+            "executed",
+            "reported"
+          ]
+        },
+        "at": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "fingerprint": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "stable_inputs": {
+          "type": "boolean"
+        },
+        "evidence": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "session_id": {
+          "type": "string",
+          "pattern": "[A-Za-z0-9][A-Za-z0-9_.-]{0,79}"
+        },
+        "root": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "exit_code": {},
+        "elapsed_seconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "evidence_sha256": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "changed_during_check": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "minItems": 0,
+          "maxItems": 10
+        }
+      },
+      "required": [
+        "id",
+        "phase",
+        "name",
+        "result",
+        "provenance",
+        "at",
+        "fingerprint",
+        "stable_inputs",
+        "evidence",
+        "session_id",
+        "root",
+        "exit_code",
+        "elapsed_seconds",
+        "sequence",
+        "evidence_sha256"
+      ],
+      "additionalProperties": false
+    },
+    "session": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "active",
+            "ended"
+          ]
+        },
+        "machine": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "host": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "root": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "started_at": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "ended_at": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "ended_reason": {
+          "type": "string",
+          "maxLength": 13000
+        },
+        "parallel": {
+          "type": "boolean"
+        },
+        "checkpoint": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "status",
+        "machine",
+        "host",
+        "root",
+        "started_at",
+        "ended_at",
+        "ended_reason",
+        "parallel",
+        "checkpoint"
+      ],
+      "additionalProperties": false
+    },
+    "process": {
+      "type": "object",
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "pattern": "[A-Za-z0-9][A-Za-z0-9_.-]{0,79}"
+        },
+        "session_id": {
+          "type": "string",
+          "pattern": "[A-Za-z0-9][A-Za-z0-9_.-]{0,79}"
+        },
+        "machine": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "root": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "directory": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "keep": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "run_id",
+        "session_id",
+        "machine",
+        "root",
+        "directory",
+        "keep"
+      ],
+      "additionalProperties": false
+    },
+    "state": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 2
+        },
+        "project_id": {
+          "type": "string",
+          "pattern": "[A-Za-z0-9][A-Za-z0-9_.-]{0,79}"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "created_at": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "updated_at": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "documents": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "string",
+              "maxLength": 1000
+            },
+            "plan": {
+              "type": "string",
+              "maxLength": 1000
+            },
+            "handover": {
+              "type": "string",
+              "maxLength": 1000
+            }
+          },
+          "required": [
+            "context",
+            "plan",
+            "handover"
+          ],
+          "additionalProperties": false
+        },
+        "sessions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/session"
+          }
+        },
+        "phases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/phase_state"
+          },
+          "minItems": 0,
+          "maxItems": 2000
+        },
+        "checks": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/check"
+          }
+        },
+        "processes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/process"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "minItems": 0,
+          "maxItems": 1000
+        }
+      },
+      "required": [
+        "schema_version",
+        "project_id",
+        "revision",
+        "created_at",
+        "updated_at",
+        "documents",
+        "sessions",
+        "phases",
+        "checks",
+        "processes",
+        "events"
+      ],
+      "additionalProperties": false
+    },
+    "batch_step": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "enum": [
+            "plan",
+            "transition",
+            "checkpoint"
+          ]
+        },
+        "phases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/phase_input"
+          },
+          "minItems": 1,
+          "maxItems": 2000
+        },
+        "phase": {
+          "$ref": "#/$defs/id"
+        },
+        "to": {
+          "type": "string",
+          "enum": [
+            "TODO",
+            "IN_PROGRESS",
+            "VERIFY",
+            "DONE",
+            "BLOCKED",
+            "NEEDS_DECISION",
+            "DEFERRED"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "acceptance_note": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "next_action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 12000
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 12000
+        }
+      },
+      "required": [
+        "command"
+      ],
+      "additionalProperties": false
+    },
+    "batch": {
+      "type": "object",
+      "properties": {
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/batch_step"
+          },
+          "minItems": 1,
+          "maxItems": 20
+        }
+      },
+      "required": [
+        "steps"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

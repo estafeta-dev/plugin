@@ -1,0 +1,4 @@
+interface:
+  display_name: "Session Handover"
+  short_description: "Record verified changes, gaps and next steps"
+  default_prompt: "Use $session-handover to update the project handover from the actual changes and checks."

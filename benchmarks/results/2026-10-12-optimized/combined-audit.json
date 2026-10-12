@@ -1,0 +1,37 @@
+{
+  "checks": [
+    {
+      "name": "Sixteen distinct fresh coding chats",
+      "passed": true,
+      "count": 16
+    },
+    {
+      "name": "Thirteen native usage receipts; one capacity failure and two confirmation timeouts remain missing",
+      "passed": true,
+      "count": 13
+    },
+    {
+      "name": "Both repetitions froze identical source hashes",
+      "passed": true
+    },
+    {
+      "name": "Website baseline stage 1 identical prompt",
+      "passed": true
+    },
+    {
+      "name": "Website baseline stage 2 identical prompt",
+      "passed": true
+    },
+    {
+      "name": "Website workflow stage 1 identical prompt",
+      "passed": true
+    },
+    {
+      "name": "Website workflow stage 2 identical prompt",
+      "passed": true
+    }
+  ],
+  "passed": 7,
+  "total": 7,
+  "note": "All original observations retained. The paired website repetition was declared before execution, not selected by final quality or cost."
+}

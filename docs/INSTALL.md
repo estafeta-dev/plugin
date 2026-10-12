@@ -1,0 +1,141 @@
+# Installation
+
+Requires Python 3.9+ for the deterministic runtime. Its scripts use only the
+standard library. Native plugin installation also requires a host that supports
+that plugin format. The repository is public, so cloning needs no login.
+
+```sh
+git clone https://github.com/pashbel/session-workflow.git
+cd session-workflow
+python3 scripts/workflow.py check
+```
+
+Windows may use `py -3` instead of `python3`.
+Choose one installation route per provider to avoid duplicate skill discovery.
+
+## Install through an agent chat
+
+Use the [copy-and-paste installation prompt in the README](../README.md#install-through-an-agent-chat)
+with an agent that has terminal and filesystem access. It detects the execution
+environment, clones the repository, installs into the requested
+profile and verifies the result. The prompt is in English and asks the agent to
+reply in your language.
+
+By default it installs for the current agent/profile. To cover several providers,
+name them in the first sentence, or request all detected personal providers and
+profiles. Review which machine executes the chat: a cloud or remote agent installs
+on its execution host, and a chat without file/tool access cannot install locally.
+The prompt checks for this boundary before choosing a destination.
+
+## Portable skills: any supported provider
+
+This route installs five standalone skills with the same runtime and instructions.
+It also works from an extracted full source ZIP.
+
+```sh
+python3 scripts/workflow.py install --all-detected --dry-run
+python3 scripts/workflow.py install --all-detected
+python3 scripts/workflow.py status --all-detected
+```
+
+Or choose providers explicitly:
+
+```sh
+python3 scripts/workflow.py install --provider codex --provider claude
+python3 scripts/workflow.py install --provider gemini --provider opencode
+python3 scripts/workflow.py install --provider copilot --provider hermes
+python3 scripts/workflow.py install --dest /path/to/custom/profile/skills
+```
+
+| Provider option | Default destination |
+| --- | --- |
+| `codex` | Existing `~/.codex/skills`; otherwise `~/.agents/skills` |
+| `claude` | `~/.claude/skills` |
+| `gemini` | `~/.gemini/skills` |
+| `antigravity` | `~/.gemini/config/skills` |
+| `opencode` | `~/.config/opencode/skills` |
+| `copilot` | `~/.copilot/skills` |
+| `hermes` | `~/.hermes/skills` |
+| `kimi` | `~/.kimi/skills` |
+| `agents` | `~/.agents/skills` |
+
+The installer respects configured provider homes and detects existing Claude
+and Hermes profiles. It changes only these five skills. A changed directory is
+backed up intact outside the discovery root before its replacement. Updates are
+atomic per skill; rerunning the installer converges after a partial failure.
+`status` compares complete directory hashes. Reload skills or start a new host
+session afterward. Higher-priority project/plugin copies can shadow global skills.
+
+## Codex plugin
+
+The repo contains an OpenAI marketplace catalog, a portable `plugin.json`, and a
+Codex compatibility manifest. On a CLI with the plugin commands below:
+
+```sh
+codex plugin marketplace add pashbel/session-workflow
+codex plugin add session-workflow@pashbel-session-workflow
+codex plugin list --marketplace pashbel-session-workflow --json
+```
+
+If Git access is configured differently for the host, add the authenticated local
+clone with `codex plugin marketplace add .` instead. Open the desktop plugin
+browser to install from that marketplace when the installed client uses the UI
+for installation. Start a new session and verify the five skills are available.
+See [OpenAI packaging documentation](https://developers.openai.com/plugins/build/plugins).
+
+## Claude Code plugin
+
+```sh
+claude plugin marketplace add pashbel/session-workflow
+claude plugin install session-workflow@pashbel-session-workflow
+claude plugin details session-workflow
+```
+
+The local-clone alternative is `claude plugin marketplace add .`. Reload plugins
+or start a new session. Plugin skills use namespaced commands:
+
+```text
+/session-workflow:session-start
+/session-workflow:plan-and-orchestrate
+/session-workflow:session-handover
+/session-workflow:session-end
+/session-workflow:session-guide
+```
+
+See [Claude marketplace documentation](https://code.claude.com/docs/en/plugin-marketplaces).
+Do not enable a duplicate standalone copy alongside the plugin unless you
+intentionally select its distinct source. Existing standalone installations can
+keep using the portable route without migration.
+
+## Upgrading from 2.x
+
+`install` backs up and removes the old `handover-changelog` directory only when it
+came from this pack; a same-named skill from another pack stays. `status` prints
+`RETIRED-PRESENT` while an old copy remains. Native plugin users update the plugin
+through the host. Project state written by 2.x is upgraded on its first write and
+the original is kept as `.agent-state/session-workflow/state.v1.json`; the removed
+operation ledger's unresolved IDs are reported once.
+
+## Updates and other devices
+
+For a clean cloned source checkout:
+
+```sh
+git pull --ff-only
+python3 scripts/workflow.py check
+python3 scripts/workflow.py install --all-detected
+python3 scripts/workflow.py status --all-detected
+```
+
+Preserve local source edits before pulling. Native plugin users refresh their
+marketplace and update/reload the installed plugin through the host. For a local
+marketplace, keep its clone at a stable location.
+
+Installing the plugin transfers instructions and scripts. Project files,
+uncommitted changes and `.agent-state/session-workflow` evidence need their own
+authorized transfer. See [usage](USAGE.md) for session handoff and parallel work.
+
+For copy-route rollback, move the current skill directory aside, then restore its
+saved directory from `skill-backups/`; preserve any newer customizations first.
+The receipt `.session-workflow-install.json` beside the skill root identifies the
+backup. Native plugin installations use the host's plugin manager for removal.

@@ -1,0 +1,441 @@
+{
+  "generated_at": "2026-10-12T00:25:25.441584+00:00",
+  "rows": [
+    {
+      "scenario": "website",
+      "arm": "baseline",
+      "elapsed_seconds": 993.464519791,
+      "usage": {
+        "input_tokens": 815034,
+        "cached_input_tokens": 709632,
+        "output_tokens": 50565,
+        "reasoning_output_tokens": 8710
+      },
+      "total_tokens": 865599,
+      "uncached_input_tokens": 105402,
+      "phase1_passed": 6,
+      "phase1_total": 6,
+      "final_passed": 11,
+      "final_total": 11,
+      "failed_requirement_groups": [],
+      "commands": 39,
+      "failed_commands": 6,
+      "runtime_commands": 0,
+      "stages": [
+        {
+          "started_at": "2026-10-11T22:38:24.225997+00:00",
+          "finished_at": "2026-10-11T22:49:12.292073+00:00",
+          "elapsed_seconds": 648.0629804580001,
+          "exit_code": 0,
+          "timed_out": false,
+          "usage": {
+            "input_tokens": 391791,
+            "cached_input_tokens": 341632,
+            "output_tokens": 32943,
+            "reasoning_output_tokens": 4498
+          },
+          "turns_completed": 1,
+          "command_count": 11,
+          "failed_command_count": 2,
+          "runtime_command_count": 0,
+          "skill_read_evidence": [],
+          "grading_seconds": 5.124309791000087
+        },
+        {
+          "started_at": "2026-10-11T22:49:17.425318+00:00",
+          "finished_at": "2026-10-11T22:55:02.831656+00:00",
+          "elapsed_seconds": 345.40153933299996,
+          "exit_code": 0,
+          "timed_out": false,
+          "usage": {
+            "input_tokens": 423243,
+            "cached_input_tokens": 368000,
+            "output_tokens": 17622,
+            "reasoning_output_tokens": 4212
+          },
+          "turns_completed": 1,
+          "command_count": 28,
+          "failed_command_count": 4,
+          "runtime_command_count": 0,
+          "skill_read_evidence": [],
+          "grading_seconds": 6.3559241660000225
+        }
+      ],
+      "grading_seconds": 11.48023395700011,
+      "tokens_per_passed_requirement": 78690.81818181818,
+      "primary_phase1_passed": 6,
+      "primary_final_passed": 10,
+      "adjudication_seconds": 10.192850042
+    },
+    {
+      "scenario": "website",
+      "arm": "workflow",
+      "elapsed_seconds": 1413.9735556680002,
+      "usage": {
+        "input_tokens": 1922063,
+        "cached_input_tokens": 1756544,
+        "output_tokens": 52505,
+        "reasoning_output_tokens": 13103
+      },
+      "total_tokens": 1974568,
+      "uncached_input_tokens": 165519,
+      "phase1_passed": 6,
+      "phase1_total": 6,
+      "final_passed": 11,
+      "final_total": 11,
+      "failed_requirement_groups": [],
+      "commands": 112,
+      "failed_commands": 8,
+      "runtime_commands": 55,
+      "stages": [
+        {
+          "started_at": "2026-10-11T22:55:09.199173+00:00",
+          "finished_at": "2026-10-11T23:06:46.466589+00:00",
+          "elapsed_seconds": 697.259618709,
+          "exit_code": 0,
+          "timed_out": false,
+          "usage": {
+            "input_tokens": 994423,
+            "cached_input_tokens": 914304,
+            "output_tokens": 32393,
+            "reasoning_output_tokens": 8057
+          },
+          "turns_completed": 1,
+          "command_count": 55,
+          "failed_command_count": 4,
+          "runtime_command_count": 29,
+          "skill_read_evidence": [
+            "session-start",
+            "plan-and-orchestrate",
+            "handover-changelog",
+            "session-end"
+          ],
+          "grading_seconds": 9.894787124999993
+        },
+        {
+          "started_at": "2026-10-11T23:06:56.412030+00:00",
+          "finished_at": "2026-10-11T23:18:53.139845+00:00",
+          "elapsed_seconds": 716.7139369590002,
+          "exit_code": 0,
+          "timed_out": false,
+          "usage": {
+            "input_tokens": 927640,
+            "cached_input_tokens": 842240,
+            "output_tokens": 20112,
+            "reasoning_output_tokens": 5046
+          },
+          "turns_completed": 1,
+          "command_count": 57,
+          "failed_command_count": 4,
+          "runtime_command_count": 26,
+          "skill_read_evidence": [
+            "session-start",
+            "plan-and-orchestrate",
+            "handover-changelog",
+            "session-end"
+          ],
+          "grading_seconds": 6.368302041999868
+        }
+      ],
+      "grading_seconds": 16.263089166999862,
+      "tokens_per_passed_requirement": 179506.18181818182,
+      "primary_phase1_passed": 6,
+      "primary_final_passed": 10,
+      "adjudication_seconds": 10.007748167
+    },
+    {
+      "scenario": "game",
+      "arm": "workflow",
+      "elapsed_seconds": 1030.1598304589997,
+      "usage": {
+        "input_tokens": 2043416,
+        "cached_input_tokens": 1900800,
+        "output_tokens": 42758,
+        "reasoning_output_tokens": 10126
+      },
+      "total_tokens": 2086174,
+      "uncached_input_tokens": 142616,
+      "phase1_passed": 7,
+      "phase1_total": 7,
+      "final_passed": 10,
+      "final_total": 10,
+      "failed_requirement_groups": [],
+      "commands": 88,
+      "failed_commands": 8,
+      "runtime_commands": 53,
+      "stages": [
+        {
+          "started_at": "2026-10-11T23:18:59.557541+00:00",
+          "finished_at": "2026-10-11T23:28:25.982165+00:00",
+          "elapsed_seconds": 566.4189974999999,
+          "exit_code": 0,
+          "timed_out": false,
+          "usage": {
+            "input_tokens": 755064,
+            "cached_input_tokens": 689792,
+            "output_tokens": 21764,
+            "reasoning_output_tokens": 5227
+          },
+          "turns_completed": 1,
+          "command_count": 47,
+          "failed_command_count": 4,
+          "runtime_command_count": 23,
+          "skill_read_evidence": [
+            "session-start",
+            "plan-and-orchestrate",
+            "handover-changelog",
+            "session-end"
+          ],
+          "grading_seconds": 4.283338124999773
+        },
+        {
+          "started_at": "2026-10-11T23:28:30.300555+00:00",
+          "finished_at": "2026-10-11T23:36:14.047988+00:00",
+          "elapsed_seconds": 463.7408329589998,
+          "exit_code": 0,
+          "timed_out": false,
+          "usage": {
+            "input_tokens": 1288352,
+            "cached_input_tokens": 1211008,
+            "output_tokens": 20994,
+            "reasoning_output_tokens": 4899
+          },
+          "turns_completed": 1,
+          "command_count": 41,
+          "failed_command_count": 4,
+          "runtime_command_count": 30,
+          "skill_read_evidence": [
+            "session-start",
+            "plan-and-orchestrate",
+            "handover-changelog",
+            "session-end"
+          ],
+          "grading_seconds": 4.57060008299959
+        }
+      ],
+      "grading_seconds": 8.853938207999363,
+      "tokens_per_passed_requirement": 208617.4,
+      "primary_phase1_passed": 6,
+      "primary_final_passed": 9,
+      "adjudication_seconds": 7.258665749999999
+    },
+    {
+      "scenario": "game",
+      "arm": "baseline",
+      "elapsed_seconds": 811.4528636659998,
+      "usage": {
+        "input_tokens": 599452,
+        "cached_input_tokens": 493184,
+        "output_tokens": 40956,
+        "reasoning_output_tokens": 13039
+      },
+      "total_tokens": 640408,
+      "uncached_input_tokens": 106268,
+      "phase1_passed": 7,
+      "phase1_total": 7,
+      "final_passed": 10,
+      "final_total": 10,
+      "failed_requirement_groups": [],
+      "commands": 31,
+      "failed_commands": 7,
+      "runtime_commands": 0,
+      "stages": [
+        {
+          "started_at": "2026-10-11T23:36:18.667823+00:00",
+          "finished_at": "2026-10-11T23:44:03.221097+00:00",
+          "elapsed_seconds": 464.54899720799995,
+          "exit_code": 0,
+          "timed_out": false,
+          "usage": {
+            "input_tokens": 244393,
+            "cached_input_tokens": 194560,
+            "output_tokens": 22694,
+            "reasoning_output_tokens": 8076
+          },
+          "turns_completed": 1,
+          "command_count": 13,
+          "failed_command_count": 3,
+          "runtime_command_count": 0,
+          "skill_read_evidence": [],
+          "grading_seconds": 4.508002875000329
+        },
+        {
+          "started_at": "2026-10-11T23:44:07.743257+00:00",
+          "finished_at": "2026-10-11T23:49:54.651760+00:00",
+          "elapsed_seconds": 346.9038664579998,
+          "exit_code": 0,
+          "timed_out": false,
+          "usage": {
+            "input_tokens": 355059,
+            "cached_input_tokens": 298624,
+            "output_tokens": 18262,
+            "reasoning_output_tokens": 4963
+          },
+          "turns_completed": 1,
+          "command_count": 18,
+          "failed_command_count": 4,
+          "runtime_command_count": 0,
+          "skill_read_evidence": [],
+          "grading_seconds": 4.685562917000425
+        }
+      ],
+      "grading_seconds": 9.193565792000754,
+      "tokens_per_passed_requirement": 64040.8,
+      "primary_phase1_passed": 6,
+      "primary_final_passed": 9,
+      "adjudication_seconds": 7.329875791999999
+    },
+    {
+      "scenario": "app",
+      "arm": "baseline",
+      "elapsed_seconds": 968.1988195000004,
+      "usage": {
+        "input_tokens": 786790,
+        "cached_input_tokens": 674176,
+        "output_tokens": 42696,
+        "reasoning_output_tokens": 10213
+      },
+      "total_tokens": 829486,
+      "uncached_input_tokens": 112614,
+      "phase1_passed": 8,
+      "phase1_total": 8,
+      "final_passed": 12,
+      "final_total": 12,
+      "failed_requirement_groups": [],
+      "commands": 32,
+      "failed_commands": 5,
+      "runtime_commands": 0,
+      "stages": [
+        {
+          "started_at": "2026-10-11T23:49:59.345164+00:00",
+          "finished_at": "2026-10-11T23:58:51.963633+00:00",
+          "elapsed_seconds": 532.6132953340002,
+          "exit_code": 0,
+          "timed_out": false,
+          "usage": {
+            "input_tokens": 292562,
+            "cached_input_tokens": 248320,
+            "output_tokens": 25761,
+            "reasoning_output_tokens": 6082
+          },
+          "turns_completed": 1,
+          "command_count": 19,
+          "failed_command_count": 3,
+          "runtime_command_count": 0,
+          "skill_read_evidence": [],
+          "grading_seconds": 2.712607458000093
+        },
+        {
+          "started_at": "2026-10-11T23:58:54.688279+00:00",
+          "finished_at": "2026-10-12T00:06:10.279082+00:00",
+          "elapsed_seconds": 435.58552416600014,
+          "exit_code": 0,
+          "timed_out": false,
+          "usage": {
+            "input_tokens": 494228,
+            "cached_input_tokens": 425856,
+            "output_tokens": 16935,
+            "reasoning_output_tokens": 4131
+          },
+          "turns_completed": 1,
+          "command_count": 13,
+          "failed_command_count": 2,
+          "runtime_command_count": 0,
+          "skill_read_evidence": [],
+          "grading_seconds": 2.9126066670005457
+        }
+      ],
+      "grading_seconds": 5.625214125000639,
+      "tokens_per_passed_requirement": 69123.83333333333,
+      "primary_phase1_passed": 8,
+      "primary_final_passed": 12,
+      "adjudication_seconds": 4.248075333999999
+    },
+    {
+      "scenario": "app",
+      "arm": "workflow",
+      "elapsed_seconds": 1141.628768042,
+      "usage": {
+        "input_tokens": 1944592,
+        "cached_input_tokens": 1788160,
+        "output_tokens": 50940,
+        "reasoning_output_tokens": 14954
+      },
+      "total_tokens": 1995532,
+      "uncached_input_tokens": 156432,
+      "phase1_passed": 8,
+      "phase1_total": 8,
+      "final_passed": 12,
+      "final_total": 12,
+      "failed_requirement_groups": [],
+      "commands": 96,
+      "failed_commands": 3,
+      "runtime_commands": 47,
+      "stages": [
+        {
+          "started_at": "2026-10-12T00:06:13.204595+00:00",
+          "finished_at": "2026-10-12T00:15:59.489533+00:00",
+          "elapsed_seconds": 586.2780836669999,
+          "exit_code": 0,
+          "timed_out": false,
+          "usage": {
+            "input_tokens": 790023,
+            "cached_input_tokens": 716032,
+            "output_tokens": 26657,
+            "reasoning_output_tokens": 7149
+          },
+          "turns_completed": 1,
+          "command_count": 39,
+          "failed_command_count": 3,
+          "runtime_command_count": 25,
+          "skill_read_evidence": [
+            "session-start",
+            "plan-and-orchestrate",
+            "handover-changelog",
+            "session-end"
+          ],
+          "grading_seconds": 2.5565894579995074
+        },
+        {
+          "started_at": "2026-10-12T00:16:02.091511+00:00",
+          "finished_at": "2026-10-12T00:25:17.447310+00:00",
+          "elapsed_seconds": 555.3506843750001,
+          "exit_code": 0,
+          "timed_out": false,
+          "usage": {
+            "input_tokens": 1154569,
+            "cached_input_tokens": 1072128,
+            "output_tokens": 24283,
+            "reasoning_output_tokens": 7805
+          },
+          "turns_completed": 1,
+          "command_count": 57,
+          "failed_command_count": 0,
+          "runtime_command_count": 22,
+          "skill_read_evidence": [
+            "session-start",
+            "plan-and-orchestrate",
+            "handover-changelog",
+            "session-end"
+          ],
+          "grading_seconds": 3.131764249999833
+        }
+      ],
+      "grading_seconds": 5.68835370799934,
+      "tokens_per_passed_requirement": 166294.33333333334,
+      "primary_phase1_passed": 8,
+      "primary_final_passed": 12,
+      "adjudication_seconds": 4.183129500999996
+    }
+  ],
+  "limitations": "One paired sample per scenario; no statistical significance.",
+  "adjudication": {
+    "reason": "Two evaluator defects corrected without modifying product code: read browser document location instead of asynchronously cached Playwright page.url; memory game has button controls and need not contain input/select/textarea. Website/app form-label checks unchanged. Apply the same corrected grader to every snapshot.",
+    "changed_groups": [
+      "W11",
+      "UI1 (game only)"
+    ],
+    "original_sha256": "268bea5e7bd318ca1d2fafdf13c7aa8c7ce0a387634da511ce399cd6e8d798e9",
+    "corrected_sha256": "14987817f538689f3b5901faff68c7d205861fa87b6744e90befb83fa57bd0f0"
+  }
+}

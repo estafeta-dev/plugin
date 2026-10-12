@@ -1,0 +1,104 @@
+{
+  "grader_sha256": "7caf41077e62b893ed34d443427e4723c3da97bf54df8d7dc44a193f6ac275af",
+  "browser": "msedge",
+  "historical_source_untouched": true,
+  "observations": [
+    {
+      "case": "website-baseline",
+      "stage": 1,
+      "elapsed_seconds": 5.874695167,
+      "same_requirement_outcomes": true,
+      "passed": 6,
+      "total": 6
+    },
+    {
+      "case": "website-baseline",
+      "stage": 2,
+      "elapsed_seconds": 6.673279292000001,
+      "same_requirement_outcomes": true,
+      "passed": 11,
+      "total": 11
+    },
+    {
+      "case": "website-workflow",
+      "stage": 1,
+      "elapsed_seconds": 4.057580750000001,
+      "same_requirement_outcomes": true,
+      "passed": 6,
+      "total": 6
+    },
+    {
+      "case": "website-workflow",
+      "stage": 2,
+      "elapsed_seconds": 6.296779583000003,
+      "same_requirement_outcomes": true,
+      "passed": 11,
+      "total": 11
+    },
+    {
+      "case": "game-baseline",
+      "stage": 1,
+      "elapsed_seconds": 3.6631968340000007,
+      "same_requirement_outcomes": true,
+      "passed": 7,
+      "total": 7
+    },
+    {
+      "case": "game-baseline",
+      "stage": 2,
+      "elapsed_seconds": 3.7978739160000003,
+      "same_requirement_outcomes": true,
+      "passed": 10,
+      "total": 10
+    },
+    {
+      "case": "game-workflow",
+      "stage": 1,
+      "elapsed_seconds": 3.5098451249999982,
+      "same_requirement_outcomes": true,
+      "passed": 7,
+      "total": 7
+    },
+    {
+      "case": "game-workflow",
+      "stage": 2,
+      "elapsed_seconds": 3.8385022910000046,
+      "same_requirement_outcomes": true,
+      "passed": 10,
+      "total": 10
+    },
+    {
+      "case": "app-baseline",
+      "stage": 1,
+      "elapsed_seconds": 2.0821537500000034,
+      "same_requirement_outcomes": true,
+      "passed": 8,
+      "total": 8
+    },
+    {
+      "case": "app-baseline",
+      "stage": 2,
+      "elapsed_seconds": 2.374194666000001,
+      "same_requirement_outcomes": true,
+      "passed": 12,
+      "total": 12
+    },
+    {
+      "case": "app-workflow",
+      "stage": 1,
+      "elapsed_seconds": 2.0212142909999997,
+      "same_requirement_outcomes": true,
+      "passed": 8,
+      "total": 8
+    },
+    {
+      "case": "app-workflow",
+      "stage": 2,
+      "elapsed_seconds": 2.406851084000003,
+      "same_requirement_outcomes": true,
+      "passed": 12,
+      "total": 12
+    }
+  ],
+  "all_outcomes_unchanged": true
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Session Start"
+  short_description: "Resume the project from its saved checkpoint"
+  default_prompt: "Use $session-start to resume this project from its saved checkpoint and continue the current task."

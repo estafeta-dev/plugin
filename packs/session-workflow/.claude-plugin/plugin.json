@@ -1,0 +1,11 @@
+{
+  "name": "session-workflow",
+  "version": "3.0.0",
+  "description": "Resumable multi-session projects: checkpoints, phased plans with recorded checks, handovers and safe parallel sessions.",
+  "author": {
+    "name": "pashbel"
+  },
+  "repository": "https://github.com/pashbel/session-workflow",
+  "homepage": "https://github.com/pashbel/session-workflow",
+  "license": "Apache-2.0"
+}

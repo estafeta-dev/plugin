@@ -1,0 +1,5 @@
+{
+  "source_sha256": "4fa0c85c17850a55d5063d4ce09e79d266f46239f29da1c04e46ae14338fc547",
+  "edge_copy_sha256": "0bebc06cded84e3e684f319776e5aaf1ab621e4ffe2ebca6b9bdcbf7ff423683",
+  "change": "Browser channel only: chrome to msedge; assertions unchanged. Historical snapshots linked read-only, outputs saved under new round."
+}

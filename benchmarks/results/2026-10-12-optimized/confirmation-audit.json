@@ -1,0 +1,143 @@
+{
+  "cases": [
+    "website-baseline",
+    "website-workflow"
+  ],
+  "chat_count": 4,
+  "passed": 18,
+  "total": 22,
+  "checks": [
+    {
+      "name": "Frozen measured sources remain unchanged",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "website-baseline skill isolation",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "website-baseline stage 1 completed",
+      "passed": false,
+      "details": null
+    },
+    {
+      "name": "website-baseline stage 1 native usage",
+      "passed": false,
+      "details": null
+    },
+    {
+      "name": "website-baseline stage 1 one fresh chat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-baseline stage 2 completed",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-baseline stage 2 native usage",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-baseline stage 2 one fresh chat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-workflow skill isolation",
+      "passed": true,
+      "details": [
+        "handover-changelog",
+        "plan-and-orchestrate",
+        "session-end",
+        "session-start"
+      ]
+    },
+    {
+      "name": "website-workflow stage 1 completed",
+      "passed": false,
+      "details": null
+    },
+    {
+      "name": "website-workflow stage 1 native usage",
+      "passed": false,
+      "details": null
+    },
+    {
+      "name": "website-workflow stage 1 one fresh chat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-workflow stage 1 all four skills read",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-workflow stage 1 exact plugin copy",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "website-workflow stage 2 completed",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-workflow stage 2 native usage",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-workflow stage 2 one fresh chat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-workflow stage 2 all four skills read",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-workflow stage 2 exact plugin copy",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "website-workflow sessions ended and claims released",
+      "passed": true,
+      "details": {
+        "sessions": {
+          "stage2-20261012-142245": "ended",
+          "studio-stage1-20261012-141040": "ended"
+        },
+        "phases": [
+          {
+            "id": "P1",
+            "state": "VERIFY",
+            "owner": ""
+          },
+          {
+            "id": "P2",
+            "state": "VERIFY",
+            "owner": ""
+          }
+        ]
+      }
+    },
+    {
+      "name": "website identical functional starters",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Four distinct chats",
+      "passed": true,
+      "details": null
+    }
+  ]
+}

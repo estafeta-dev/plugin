@@ -1,0 +1,31 @@
+{
+  "type": "stage_time_cap_reached",
+  "case": "website-workflow",
+  "stage": 1,
+  "time_cap_seconds": 720,
+  "exit_code": -15,
+  "timed_out": true,
+  "native_usage": null,
+  "functional_grade": [
+    6,
+    6
+  ],
+  "sessions": {
+    "studio-stage1-20261012-141040": "ended"
+  },
+  "note": "Second repetition of BOTH website arms was predeclared and retains the original capacity-failed observation. No third repeat will be selected to obtain favorable telemetry or performance. Unknown token usage is not zero and this pair is ineligible for full-budget efficiency comparisons.",
+  "baseline_stage1": {
+    "time_cap_seconds": 720,
+    "native_usage": null,
+    "functional_grade": [
+      0,
+      6
+    ],
+    "failure_evidence": [
+      "apply_patch verification failed: multiple operations target catalogue.js",
+      "stream disconnected; SDK retry",
+      "stage killed at time cap"
+    ],
+    "note": "The first baseline stage left product implementation unfinished. These are failed execution/absent requirements, not six distinct product bugs. Second stage completed and passed11/11. No third repetition."
+  }
+}

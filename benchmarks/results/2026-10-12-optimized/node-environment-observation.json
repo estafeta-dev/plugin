@@ -1,0 +1,189 @@
+{
+  "observation": "Nested coding-tool logs expose different Node releases across fresh sessions. Source/CLI/model/functional prompts were frozen, but the broader execution environment was not fully controlled. No causal speedup claim. This is an environmental observation, not a product bug.",
+  "observations": [
+    {
+      "case": "app-baseline",
+      "stage": 1,
+      "node_version_log_evidence": [
+        {
+          "event_line": 21,
+          "versions": [
+            "26.4.0"
+          ]
+        },
+        {
+          "event_line": 25,
+          "versions": [
+            "26.4.0"
+          ]
+        },
+        {
+          "event_line": 30,
+          "versions": [
+            "26.4.0"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "app-baseline",
+      "stage": 2,
+      "node_version_log_evidence": [
+        {
+          "event_line": 30,
+          "versions": [
+            "26.4.0"
+          ]
+        },
+        {
+          "event_line": 33,
+          "versions": [
+            "26.4.0"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "app-workflow",
+      "stage": 1,
+      "node_version_log_evidence": [
+        {
+          "event_line": 41,
+          "versions": [
+            "26.4.0"
+          ]
+        },
+        {
+          "event_line": 56,
+          "versions": [
+            "26.4.0"
+          ]
+        },
+        {
+          "event_line": 58,
+          "versions": [
+            "26.4.0"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "app-workflow",
+      "stage": 2,
+      "node_version_log_evidence": [
+        {
+          "event_line": 36,
+          "versions": [
+            "26.10.0"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "game-baseline",
+      "stage": 1,
+      "node_version_log_evidence": [
+        {
+          "event_line": 25,
+          "versions": [
+            "26.4.0"
+          ]
+        },
+        {
+          "event_line": 27,
+          "versions": [
+            "26.4.0"
+          ]
+        },
+        {
+          "event_line": 38,
+          "versions": [
+            "26.4.0"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "game-baseline",
+      "stage": 2,
+      "node_version_log_evidence": [
+        {
+          "event_line": 28,
+          "versions": [
+            "26.10.0"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "game-workflow",
+      "stage": 1,
+      "node_version_log_evidence": [
+        {
+          "event_line": 29,
+          "versions": [
+            "26.10.0"
+          ]
+        },
+        {
+          "event_line": 36,
+          "versions": [
+            "26.10.0"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "game-workflow",
+      "stage": 2,
+      "node_version_log_evidence": [
+        {
+          "event_line": 36,
+          "versions": [
+            "26.10.0"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "website-baseline",
+      "stage": 1,
+      "node_version_log_evidence": [
+        {
+          "event_line": 34,
+          "versions": [
+            "26.4.0"
+          ]
+        },
+        {
+          "event_line": 37,
+          "versions": [
+            "26.4.0"
+          ]
+        },
+        {
+          "event_line": 42,
+          "versions": [
+            "26.4.0"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "website-baseline",
+      "stage": 2,
+      "node_version_log_evidence": [
+        {
+          "event_line": 49,
+          "versions": [
+            "26.10.0"
+          ]
+        }
+      ]
+    }
+  ],
+  "coordinator_node": {
+    "executable": "$HOME/.local/bin/node",
+    "version": "v26.10.0"
+  }
+}

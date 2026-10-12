@@ -1,0 +1,63 @@
+{
+  "scenario": "website",
+  "stage": 2,
+  "passed": 11,
+  "total": 11,
+  "groups": [
+    {
+      "id": "W1",
+      "name": "Combined search/category/price filters",
+      "passed": true
+    },
+    {
+      "id": "W2",
+      "name": "Stable sorting and immutable source",
+      "passed": true
+    },
+    {
+      "id": "W3",
+      "name": "Booking validation rejects invalid fields",
+      "passed": true
+    },
+    {
+      "id": "W7",
+      "name": "Shortlist toggle validates ids without mutation",
+      "passed": true
+    },
+    {
+      "id": "W8",
+      "name": "Shortlist corrupt storage is recovered safely",
+      "passed": true
+    },
+    {
+      "id": "W9",
+      "name": "URL filter round trip and invalid-value defaults",
+      "passed": true
+    },
+    {
+      "id": "UI1",
+      "name": "Mobile layout and labelled usable controls",
+      "passed": true
+    },
+    {
+      "id": "W4",
+      "name": "UI catalogue filters and empty state",
+      "passed": true
+    },
+    {
+      "id": "W5",
+      "name": "UI booking acknowledgement after valid input",
+      "passed": true
+    },
+    {
+      "id": "W10",
+      "name": "UI shortlist persists and survives filter reset",
+      "passed": true
+    },
+    {
+      "id": "W11",
+      "name": "UI URL hydration and URL updates",
+      "passed": true
+    }
+  ]
+}

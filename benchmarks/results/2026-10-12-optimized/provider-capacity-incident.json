@@ -1,0 +1,12 @@
+{
+  "case": "website-workflow",
+  "stage": 1,
+  "exit_code": 1,
+  "native_usage": null,
+  "functional_checks": [
+    6,
+    6
+  ],
+  "model_error": "stream disconnected, 503, selected model at capacity",
+  "result": "Retained incomplete observation. No token estimate and no hidden rerun. Session did not end. Treat timing/service-count reductions in this failed attempt as inconclusive."
+}

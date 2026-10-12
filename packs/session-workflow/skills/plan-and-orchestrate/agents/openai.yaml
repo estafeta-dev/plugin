@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan and Orchestrate"
+  short_description: "Plan phases and execute them with recorded checks"
+  default_prompt: "Use $plan-and-orchestrate to plan this work and execute the authorized phases."

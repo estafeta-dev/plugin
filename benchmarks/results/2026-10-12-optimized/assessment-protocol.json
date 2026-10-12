@@ -1,0 +1,15 @@
+{
+  "external_browser": "msedge",
+  "version": "155.0.4283.45",
+  "grader_sha256": "7caf41077e62b893ed34d443427e4723c3da97bf54df8d7dc44a193f6ac275af",
+  "resume_runner_sha256": "e5c4cec4ed96379ce2f5f3e3853e61ddc5d51cc1aa71f9235fa50e112a25b337",
+  "primary_requirements_unchanged": true,
+  "original_protocol_retained": true,
+  "incident": "browser-infrastructure-incident.json",
+  "first_phase_uniform_reassessment": {
+    "chrome": 6,
+    "edge": 6,
+    "total": 6
+  },
+  "coding_browser_hint": "Original Chrome hint retained; the sandbox denied earlier launches and Chrome is now absent. This is explicitly a comparison limitation."
+}

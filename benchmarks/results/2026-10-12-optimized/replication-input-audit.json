@@ -1,0 +1,66 @@
+[
+  {
+    "case": "game-baseline",
+    "stage": 1,
+    "identical_to_previous_round": true
+  },
+  {
+    "case": "game-baseline",
+    "stage": 2,
+    "identical_to_previous_round": true
+  },
+  {
+    "case": "website-baseline",
+    "stage": 1,
+    "identical_to_previous_round": true
+  },
+  {
+    "case": "website-baseline",
+    "stage": 2,
+    "identical_to_previous_round": true
+  },
+  {
+    "case": "app-workflow",
+    "stage": 1,
+    "identical_to_previous_round": true
+  },
+  {
+    "case": "app-workflow",
+    "stage": 2,
+    "identical_to_previous_round": true
+  },
+  {
+    "case": "game-workflow",
+    "stage": 1,
+    "identical_to_previous_round": true
+  },
+  {
+    "case": "game-workflow",
+    "stage": 2,
+    "identical_to_previous_round": true
+  },
+  {
+    "case": "website-workflow",
+    "stage": 1,
+    "identical_to_previous_round": true
+  },
+  {
+    "case": "website-workflow",
+    "stage": 2,
+    "identical_to_previous_round": true
+  },
+  {
+    "case": "app-baseline",
+    "stage": 1,
+    "identical_to_previous_round": true
+  },
+  {
+    "case": "app-baseline",
+    "stage": 2,
+    "identical_to_previous_round": true
+  },
+  {
+    "name": "same_corrected_primary_grader",
+    "passed": true
+  }
+]

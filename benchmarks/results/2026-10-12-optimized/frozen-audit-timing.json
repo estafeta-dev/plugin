@@ -1,0 +1,29 @@
+{
+  "optimized_round": {
+    "audit_completed_at_utc": "2026-10-12T14:10:28.874596+00:00",
+    "audit_sha256": "a40dac3325687afc16ccc1e56aa64ff8c238c82d6a7fb29a8cef3a9418dbe549",
+    "passed": 59,
+    "total": 62,
+    "frozen_sources_check": {
+      "name": "Frozen measured sources remain unchanged",
+      "passed": true,
+      "details": []
+    },
+    "measured_plugin_version": "2.4.0",
+    "measured_commit": "8c1aae8929200dbe1250946e063c0cfb6b23d27e"
+  },
+  "note": "Integrity audits execute before any later instruction-only release edits. Capacity-related failed checks are preserved, not repaired.",
+  "website_confirmation": {
+    "audit_completed_at_utc": "2026-10-12T19:01:03.381356+00:00",
+    "audit_sha256": "a1591cbd8ba4d930f249217d37a047ffdb499164f61c6e86ef31f0c1a89011e8",
+    "passed": 18,
+    "total": 22,
+    "frozen_sources_check": {
+      "name": "Frozen measured sources remain unchanged",
+      "passed": true,
+      "details": []
+    },
+    "measured_plugin_version": "2.4.0",
+    "measured_commit": "8c1aae8929200dbe1250946e063c0cfb6b23d27e"
+  }
+}

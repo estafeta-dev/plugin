@@ -1,0 +1,396 @@
+{
+  "cases": [
+    "website-baseline",
+    "website-workflow",
+    "game-baseline",
+    "game-workflow",
+    "app-baseline",
+    "app-workflow"
+  ],
+  "chat_count": 12,
+  "passed": 62,
+  "total": 62,
+  "checks": [
+    {
+      "name": "Frozen measured sources remain unchanged",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "website-baseline skill isolation",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "website-baseline stage 1 completed",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-baseline stage 1 native usage",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-baseline stage 1 one fresh chat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-baseline stage 2 completed",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-baseline stage 2 native usage",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-baseline stage 2 one fresh chat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-workflow skill isolation",
+      "passed": true,
+      "details": [
+        "handover-changelog",
+        "plan-and-orchestrate",
+        "session-end",
+        "session-start"
+      ]
+    },
+    {
+      "name": "website-workflow stage 1 completed",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-workflow stage 1 native usage",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-workflow stage 1 one fresh chat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-workflow stage 1 all four skills read",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-workflow stage 1 exact plugin copy",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "website-workflow stage 2 completed",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-workflow stage 2 native usage",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-workflow stage 2 one fresh chat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-workflow stage 2 all four skills read",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "website-workflow stage 2 exact plugin copy",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "website-workflow sessions ended and claims released",
+      "passed": true,
+      "details": {
+        "sessions": {
+          "codex-stage1-20261012": "ended",
+          "codex-stage2-20261012": "ended"
+        },
+        "phases": [
+          {
+            "id": "S1",
+            "state": "VERIFY",
+            "owner": ""
+          },
+          {
+            "id": "S2",
+            "state": "VERIFY",
+            "owner": ""
+          }
+        ]
+      }
+    },
+    {
+      "name": "website identical functional starters",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "game-baseline skill isolation",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "game-baseline stage 1 completed",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "game-baseline stage 1 native usage",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "game-baseline stage 1 one fresh chat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "game-baseline stage 2 completed",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "game-baseline stage 2 native usage",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "game-baseline stage 2 one fresh chat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "game-workflow skill isolation",
+      "passed": true,
+      "details": [
+        "handover-changelog",
+        "plan-and-orchestrate",
+        "session-end",
+        "session-start"
+      ]
+    },
+    {
+      "name": "game-workflow stage 1 completed",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "game-workflow stage 1 native usage",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "game-workflow stage 1 one fresh chat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "game-workflow stage 1 all four skills read",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "game-workflow stage 1 exact plugin copy",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "game-workflow stage 2 completed",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "game-workflow stage 2 native usage",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "game-workflow stage 2 one fresh chat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "game-workflow stage 2 all four skills read",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "game-workflow stage 2 exact plugin copy",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "game-workflow sessions ended and claims released",
+      "passed": true,
+      "details": {
+        "sessions": {
+          "codex-memory-20261012": "ended",
+          "codex-memory-stage2-20261012": "ended"
+        },
+        "phases": [
+          {
+            "id": "P1",
+            "state": "VERIFY",
+            "owner": ""
+          },
+          {
+            "id": "P2",
+            "state": "DONE",
+            "owner": ""
+          },
+          {
+            "id": "P3",
+            "state": "VERIFY",
+            "owner": ""
+          },
+          {
+            "id": "P4",
+            "state": "DONE",
+            "owner": ""
+          }
+        ]
+      }
+    },
+    {
+      "name": "game identical functional starters",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "app-baseline skill isolation",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "app-baseline stage 1 completed",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "app-baseline stage 1 native usage",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "app-baseline stage 1 one fresh chat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "app-baseline stage 2 completed",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "app-baseline stage 2 native usage",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "app-baseline stage 2 one fresh chat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "app-workflow skill isolation",
+      "passed": true,
+      "details": [
+        "handover-changelog",
+        "plan-and-orchestrate",
+        "session-end",
+        "session-start"
+      ]
+    },
+    {
+      "name": "app-workflow stage 1 completed",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "app-workflow stage 1 native usage",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "app-workflow stage 1 one fresh chat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "app-workflow stage 1 all four skills read",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "app-workflow stage 1 exact plugin copy",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "app-workflow stage 2 completed",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "app-workflow stage 2 native usage",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "app-workflow stage 2 one fresh chat",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "app-workflow stage 2 all four skills read",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "app-workflow stage 2 exact plugin copy",
+      "passed": true,
+      "details": []
+    },
+    {
+      "name": "app-workflow sessions ended and claims released",
+      "passed": true,
+      "details": {
+        "sessions": {
+          "codex-task-board-20261012": "ended",
+          "codex-task-board-stage2-20261012": "ended"
+        },
+        "phases": [
+          {
+            "id": "P1",
+            "state": "VERIFY",
+            "owner": ""
+          }
+        ]
+      }
+    },
+    {
+      "name": "app identical functional starters",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Twelve distinct chats",
+      "passed": true,
+      "details": null
+    }
+  ]
+}

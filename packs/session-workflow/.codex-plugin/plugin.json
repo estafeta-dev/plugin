@@ -1,0 +1,28 @@
+{
+  "name": "session-workflow",
+  "version": "3.0.0",
+  "description": "Resumable multi-session projects: checkpoints, phased plans with recorded checks, handovers and safe parallel sessions.",
+  "author": {
+    "name": "pashbel"
+  },
+  "repository": "https://github.com/pashbel/session-workflow",
+  "homepage": "https://github.com/pashbel/session-workflow",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Session Workflow",
+    "shortDescription": "Resumable development across sessions and providers",
+    "longDescription": "Resumable multi-session projects: checkpoints, phased plans with recorded checks, handovers and safe parallel sessions.",
+    "developerName": "pashbel",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/pashbel/session-workflow",
+    "defaultPrompt": [
+      "Use session-guide to learn how Session Workflow works.",
+      "Use session-start to resume this project.",
+      "Use plan-and-orchestrate to execute the authorized plan."
+    ]
+  }
+}

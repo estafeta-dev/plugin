@@ -1,0 +1,46 @@
+{
+  "checks": [
+    {
+      "case": "app-baseline",
+      "name": "Editing cannot replace the stable task id",
+      "passed": true
+    },
+    {
+      "case": "app-baseline",
+      "name": "Stale restored counter creates 100 unique subsequent ids",
+      "passed": true
+    },
+    {
+      "case": "app-workflow",
+      "name": "Editing cannot replace the stable task id",
+      "passed": true
+    },
+    {
+      "case": "app-workflow",
+      "name": "Stale restored counter creates 100 unique subsequent ids",
+      "passed": true
+    },
+    {
+      "case": "game-baseline",
+      "name": "Complete a game with keyboard and persist best score across reload",
+      "passed": true
+    },
+    {
+      "case": "game-baseline",
+      "name": "Malformed best-score storage recovers without script failure",
+      "passed": true
+    },
+    {
+      "case": "game-workflow",
+      "name": "Complete a game with keyboard and persist best score across reload",
+      "passed": true
+    },
+    {
+      "case": "game-workflow",
+      "name": "Malformed best-score storage recovers without script failure",
+      "passed": true
+    }
+  ],
+  "passed": 8,
+  "total": 8
+}

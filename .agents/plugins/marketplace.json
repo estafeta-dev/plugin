@@ -1,0 +1,20 @@
+{
+  "name": "pashbel-session-workflow",
+  "interface": {
+    "displayName": "Session Workflow"
+  },
+  "plugins": [
+    {
+      "name": "session-workflow",
+      "source": {
+        "source": "local",
+        "path": "./packs/session-workflow"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

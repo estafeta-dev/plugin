@@ -1,0 +1,4 @@
+interface:
+  display_name: "Session End"
+  short_description: "Save a resumable checkpoint and stop owned processes"
+  default_prompt: "Use $session-end to save a resumable checkpoint and stop the processes this session started."

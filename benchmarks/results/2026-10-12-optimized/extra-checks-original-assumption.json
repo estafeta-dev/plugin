@@ -1,0 +1,47 @@
+{
+  "checks": [
+    {
+      "case": "app-baseline",
+      "name": "Editing cannot replace the stable task id",
+      "passed": true
+    },
+    {
+      "case": "app-baseline",
+      "name": "Stale restored counter creates 100 unique subsequent ids",
+      "passed": true
+    },
+    {
+      "case": "app-workflow",
+      "name": "Editing cannot replace the stable task id",
+      "passed": true
+    },
+    {
+      "case": "app-workflow",
+      "name": "Stale restored counter creates 100 unique subsequent ids",
+      "passed": true
+    },
+    {
+      "case": "game-baseline",
+      "name": "Complete a game with keyboard and persist best score across reload",
+      "passed": true
+    },
+    {
+      "case": "game-baseline",
+      "name": "Malformed best-score storage recovers without script failure",
+      "passed": true
+    },
+    {
+      "case": "game-workflow",
+      "name": "Complete a game with keyboard and persist best score across reload",
+      "passed": false,
+      "error": "locator.focus: Timeout 4000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-card-id=\"1\"]')\u001b[22m\n\n    at $LOCAL_OUTPUTS/session-workflow-benchmark-optimized-2.4-2026-10-12/extra-checks-edge.mjs:46:108\n    at check ($LOCAL_OUTPUTS/session-workflow-benchmark-optimized-2.4-2026-10-12/extra-checks-edge.mjs:12:50)\n    at $LOCAL_OUTPUTS/session-workflow-benchmark-optimized-2.4-2026-10-12/extra-checks-edge.mjs:42:13"
+    },
+    {
+      "case": "game-workflow",
+      "name": "Malformed best-score storage recovers without script failure",
+      "passed": true
+    }
+  ],
+  "passed": 7,
+  "total": 8
+}

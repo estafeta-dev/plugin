@@ -1,0 +1,10 @@
+{
+  "file": "session-workflow-benchmark-pilot-2026-10-12.zip",
+  "bytes": 5984122,
+  "sha256": "2d7f8449d167e041fb03c10843e9d4aa918d1aacafd4b0a55a674e8bd9d9b42a",
+  "files": 1069,
+  "omitted": [
+    ".git directories",
+    "__pycache__ directories"
+  ]
+}

@@ -1,0 +1,11 @@
+.DS_Store
+*.zip
+*.tar.gz
+
+__pycache__/
+*.pyc
+
+.agent-state/
+.env
+.env.*
+*.pem

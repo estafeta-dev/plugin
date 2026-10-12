@@ -1,0 +1,122 @@
+{
+  "generated_at": "2026-10-12T19:01:03.255528+00:00",
+  "rows": [
+    {
+      "scenario": "website",
+      "arm": "baseline",
+      "elapsed_seconds": 1402.4831945000003,
+      "usage": null,
+      "total_tokens": null,
+      "uncached_input_tokens": null,
+      "phase1_passed": 0,
+      "phase1_total": 6,
+      "final_passed": 11,
+      "final_total": 11,
+      "failed_requirement_groups": [],
+      "commands": 33,
+      "failed_commands": 4,
+      "runtime_commands": 0,
+      "stages": [
+        {
+          "started_at": "2026-10-12T14:31:49.518449+00:00",
+          "finished_at": "2026-10-12T14:46:26.432005+00:00",
+          "elapsed_seconds": 720.049942333,
+          "exit_code": -15,
+          "timed_out": true,
+          "usage": null,
+          "turns_completed": 0,
+          "command_count": 5,
+          "failed_command_count": 0,
+          "runtime_command_count": 0,
+          "skill_read_evidence": [],
+          "grading_seconds": 6.099690791000057
+        },
+        {
+          "started_at": "2026-10-12T14:46:32.546469+00:00",
+          "finished_at": "2026-10-12T14:57:54.991407+00:00",
+          "elapsed_seconds": 682.4332521670003,
+          "exit_code": 0,
+          "timed_out": false,
+          "usage": {
+            "input_tokens": 376126,
+            "cached_input_tokens": 332672,
+            "output_tokens": 23665,
+            "reasoning_output_tokens": 5860
+          },
+          "turns_completed": 1,
+          "command_count": 28,
+          "failed_command_count": 4,
+          "runtime_command_count": 0,
+          "skill_read_evidence": [],
+          "grading_seconds": 8.314497291000407
+        }
+      ],
+      "grading_seconds": 14.414188082000464,
+      "tokens_per_passed_requirement": null
+    },
+    {
+      "scenario": "website",
+      "arm": "workflow",
+      "elapsed_seconds": 1266.399926875,
+      "usage": null,
+      "total_tokens": null,
+      "uncached_input_tokens": null,
+      "phase1_passed": 6,
+      "phase1_total": 6,
+      "final_passed": 11,
+      "final_total": 11,
+      "failed_requirement_groups": [],
+      "commands": 73,
+      "failed_commands": 3,
+      "runtime_commands": 19,
+      "stages": [
+        {
+          "started_at": "2026-10-12T14:10:28.965740+00:00",
+          "finished_at": "2026-10-12T14:22:28.993449+00:00",
+          "elapsed_seconds": 720.021284833,
+          "exit_code": -15,
+          "timed_out": true,
+          "usage": null,
+          "turns_completed": 0,
+          "command_count": 39,
+          "failed_command_count": 2,
+          "runtime_command_count": 9,
+          "skill_read_evidence": [
+            "session-start",
+            "plan-and-orchestrate",
+            "handover-changelog",
+            "session-end"
+          ],
+          "grading_seconds": 5.776631916000042
+        },
+        {
+          "started_at": "2026-10-12T14:22:34.810717+00:00",
+          "finished_at": "2026-10-12T14:31:41.196787+00:00",
+          "elapsed_seconds": 546.378642042,
+          "exit_code": 0,
+          "timed_out": false,
+          "usage": {
+            "input_tokens": 840261,
+            "cached_input_tokens": 765952,
+            "output_tokens": 16879,
+            "reasoning_output_tokens": 4775
+          },
+          "turns_completed": 1,
+          "command_count": 34,
+          "failed_command_count": 1,
+          "runtime_command_count": 10,
+          "skill_read_evidence": [
+            "session-start",
+            "plan-and-orchestrate",
+            "handover-changelog",
+            "session-end"
+          ],
+          "grading_seconds": 8.261656583000104
+        }
+      ],
+      "grading_seconds": 14.038288499000146,
+      "tokens_per_passed_requirement": null
+    }
+  ],
+  "limitations": "One paired sample per scenario; no statistical significance."
+}
