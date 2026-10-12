@@ -65,40 +65,20 @@ compares no skills, conventions only ("lite") and the full workflow.
 
 ### Through an agent chat
 
-Copy this prompt into an agent chat with terminal and filesystem access. It
-works in any language; the agent replies in yours. Replace "the current agent
-and profile" with other providers, or with "all detected personal providers
-and profiles".
+Paste this into any agent that has terminal access (Claude Code, Codex, Gemini
+CLI and others). You can write it in any language; the agent answers in yours.
 
 ```text
 Install Session Workflow from https://github.com/pashbel/session-workflow
-on this machine for the current agent and profile. Complete the installation
-and verification, and reply in my language.
-
-1. Identify the execution machine, OS, agent/provider, active profile and its
-   skill location. Check Python 3.9+ (python3, python or py -3). If you cannot
-   access the intended machine, say so before installing anywhere.
-2. The repository is public; clone it with git or gh, no login needed. Reuse
-   a suitable clone and update it only by fast-forward; otherwise clone into a
-   stable user directory outside the skills directory.
-3. Read docs/INSTALL.md. Prefer the portable copy route. If this profile already
-   uses the native plugin, update that installation instead of adding a copy.
-4. Run scripts/workflow.py check, then install --dry-run, install and status
-   with the same --provider or --dest arguments. Use --all-detected only if I
-   asked for all detected providers/profiles.
-5. Require five MATCH lines per destination and no RETIRED-PRESENT line:
-   session-start, plan-and-orchestrate, session-handover, session-end and
-   session-guide.
-   Check for other copies that would shadow the selected installation.
-6. Reload skills if possible without disrupting this chat. Do not modify any
-   project's session state to test the installation. Report exactly what remains
-   if something blocks completion.
-
-Finish with the installed version, destinations, verification results, backup
-locations and any reload step. Include these first-use requests:
-"Use session-guide. Explain how this works." and
-"Use session-start. Resume this project from its saved checkpoint."
+for this agent: follow "Agent installation" in docs/INSTALL.md.
 ```
+
+To install for several agents, write "for all my agents" instead of "for this
+agent". The agent follows the steps in [docs/INSTALL.md](docs/INSTALL.md#agent-installation),
+so updates to the procedure reach everyone without a new prompt.
+
+In Claude Code 2.1.275 or later, one command also works:
+`/plugin install session-workflow --marketplace pashbel/session-workflow`.
 
 ### From the terminal
 

@@ -13,19 +13,38 @@ python3 scripts/workflow.py check
 Windows may use `py -3` instead of `python3`.
 Choose one installation route per provider to avoid duplicate skill discovery.
 
-## Install through an agent chat
+## Agent installation
 
-Use the [copy-and-paste installation prompt in the README](../README.md#install-through-an-agent-chat)
-with an agent that has terminal and filesystem access. It detects the execution
-environment, clones the repository, installs into the requested
-profile and verifies the result. The prompt is in English and asks the agent to
-reply in your language.
+These steps are for an agent asked in a chat to install the skills. Follow them
+in order. At the first blocker, stop and say what remains. Answer in the user's
+language.
 
-By default it installs for the current agent/profile. To cover several providers,
-name them in the first sentence, or request all detected personal providers and
-profiles. Review which machine executes the chat: a cloud or remote agent installs
-on its execution host, and a chat without file/tool access cannot install locally.
-The prompt checks for this boundary before choosing a destination.
+1. **Where you run.** Name the machine, OS, agent and active profile. If this is
+   not the user's own machine (for example a cloud sandbox), or you lack
+   terminal and file access, say so before installing anything.
+2. **Python.** Find Python 3.9+: `python3`, `python` or `py -3`.
+3. **Source.** Reuse an existing clone and update it only by fast-forward.
+   Otherwise run `git clone https://github.com/pashbel/session-workflow.git`
+   into a stable user directory outside any skills directory. No login is needed.
+4. **Route.** If this profile already has the native plugin, update it through
+   the host instead of adding a copy. Otherwise use the portable route below.
+5. **Install.** Run `scripts/workflow.py check`, then `install --dry-run`,
+   `install` and `status`, all with the same target: `--provider <this agent>`
+   or `--dest <skills directory>`. Use `--all-detected` only if the user asked
+   for all agents.
+6. **Verify.**
+   - `status` prints five MATCH lines per destination: session-start,
+     plan-and-orchestrate, session-handover, session-end and session-guide.
+   - There is no RETIRED-PRESENT line.
+   - No other copy shadows these skills.
+7. **Finish.** Reload skills if that is possible without ending the chat. Do
+   not touch any project's session state. Report:
+   - the version and destinations;
+   - the verification result;
+   - the backup location;
+   - any reload step.
+
+   Then suggest a first request: "Use session-guide. Explain how this works."
 
 ## Portable skills: any supported provider
 
