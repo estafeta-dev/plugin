@@ -32,6 +32,15 @@ language.
    `install` and `status`, all with the same target: `--provider <this agent>`
    or `--dest <skills directory>`. Use `--all-detected` only if the user asked
    for all agents.
+
+   `install` writes to the agent's own skills directory. Some hosts guard that
+   directory, for example the auto mode of Claude Code. If the host blocks
+   `install` and the user has not yet authorized this write, ask in the chat
+   before you send them to a terminal. Quote the exact `install` command and
+   destination, say that changed skills are backed up first, and ask for
+   confirmation in their own words. After a direct confirmation, retry the
+   same command once. Never edit host permissions or settings to get past the
+   block. If it is blocked again, report the command for the user to run.
 6. **Verify.**
    - `status` prints five MATCH lines per destination: session-start,
      plan-and-orchestrate, session-handover, session-end and session-guide.
@@ -84,6 +93,28 @@ backed up intact outside the discovery root before its replacement. Updates are
 atomic per skill; rerunning the installer converges after a partial failure.
 `status` compares complete directory hashes. Reload skills or start a new host
 session afterward. Higher-priority project/plugin copies can shadow global skills.
+
+### Claude Code auto mode
+
+The auto mode classifier treats writes to `~/.claude/skills` as
+self-modification. It allows them only when your own message names the change.
+To let agents install and update estafeta without asking each time, add an
+exception to `~/.claude/settings.json`. The classifier ignores `autoMode` in
+project settings.
+
+```json
+{
+  "autoMode": {
+    "allow": [
+      "$defaults",
+      "Installing or updating the estafeta skill pack (github.com/pashbel/estafeta) with its own `scripts/workflow.py install` and `status` into ~/.claude/skills is allowed: the installer backs up replaced skills."
+    ]
+  }
+}
+```
+
+Keep `"$defaults"` or the built-in exceptions are replaced. Check the result
+with `claude auto-mode config`.
 
 ## Codex plugin
 

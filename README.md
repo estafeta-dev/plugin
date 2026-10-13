@@ -39,7 +39,13 @@ others) and Python 3.9+.
 ```text
 Install estafeta from https://github.com/pashbel/estafeta
 for this agent: follow "Agent installation" in docs/INSTALL.md.
+I authorize its installer to install and replace the estafeta skills
+in this agent's skills directory, with backups.
 ```
+
+The last sentence is your consent for the agent to change its own skills.
+Without it, a guarded agent such as Claude Code in auto mode stops before
+`install`.
 
 <a name="option-2-use-the-terminal"></a>
 
