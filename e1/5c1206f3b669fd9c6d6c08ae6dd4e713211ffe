@@ -1,0 +1,59 @@
+packs/session-workflow/assets/headings/estafeta-300.svg
+  s_9dd66773c022b6::t_69d949ac768889 8
+  s_9dd66773c022b6::t_a44bb9a2fb3fbc 1-7,9
+README.md
+  s_9dd66773c022b6::t_a44bb9a2fb3fbc 1-3,26-28,35-37,44-46,68-70
+  s_9dd66773c022b6::t_f7a0195458bf72 30
+packs/session-workflow/assets/headings/limits.svg
+  s_9dd66773c022b6::t_69d949ac768889 8
+  s_9dd66773c022b6::t_a44bb9a2fb3fbc 1-7,9
+packs/session-workflow/assets/headings/license.svg
+  s_9dd66773c022b6::t_a44bb9a2fb3fbc 1-7,9
+  s_9dd66773c022b6::t_69d949ac768889 8
+packs/session-workflow/assets/headings/estafeta.svg
+  s_9dd66773c022b6::t_69d949ac768889 8
+  s_9dd66773c022b6::t_a44bb9a2fb3fbc 1-7,9
+packs/session-workflow/assets/headings/NuosuSIL-OFL.txt
+  s_9dd66773c022b6::t_a44bb9a2fb3fbc 1-94
+packs/session-workflow/assets/headings/getting-started.svg
+  s_9dd66773c022b6::t_a44bb9a2fb3fbc 1-7,9
+  s_9dd66773c022b6::t_69d949ac768889 8
+packs/session-workflow/README.md
+  s_9dd66773c022b6::t_a44bb9a2fb3fbc 1-3,16-18,31-33,47-49,86-88,98-100
+packs/session-workflow/assets/headings/changes-in-300.svg
+  s_9dd66773c022b6::t_69d949ac768889 8
+  s_9dd66773c022b6::t_a44bb9a2fb3fbc 1-7,9
+packs/session-workflow/assets/headings/project-record.svg
+  s_9dd66773c022b6::t_a44bb9a2fb3fbc 1-7,9
+  s_9dd66773c022b6::t_69d949ac768889 8
+packs/session-workflow/assets/headings/option-1-ask-your-agent.svg
+  s_9dd66773c022b6::t_a44bb9a2fb3fbc 1-7,9
+  s_9dd66773c022b6::t_69d949ac768889 8
+packs/session-workflow/assets/headings/how-to-invoke.svg
+  s_9dd66773c022b6::t_69d949ac768889 8
+  s_9dd66773c022b6::t_a44bb9a2fb3fbc 1-7,9
+packs/session-workflow/assets/headings/install.svg
+  s_9dd66773c022b6::t_a44bb9a2fb3fbc 1-7,9
+  s_9dd66773c022b6::t_69d949ac768889 8
+packs/session-workflow/assets/headings/SOURCE.txt
+  s_9dd66773c022b6::t_a44bb9a2fb3fbc 1-6
+packs/session-workflow/assets/headings/option-2-use-the-terminal.svg
+  s_9dd66773c022b6::t_a44bb9a2fb3fbc 1-7,9
+  s_9dd66773c022b6::t_69d949ac768889 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "e15c1206f3b669fd9c6d6c08ae6dd4e713211ffe",
+  "prompts": {},
+  "sessions": {
+    "s_9dd66773c022b6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a13292-2cb4-7d73-ac1b-890090ad8ddc",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Pavlo Bieliaiev <25230576+pashbel@users.noreply.github.com>"
+    }
+  }
+}
