@@ -90,7 +90,7 @@ once.
 Claude Code 2.1.275 or later:
 
 ```text
-/plugin install estafeta --marketplace pashbel/session-workflow
+/plugin install estafeta --marketplace pashbel/estafeta
 ```
 
 For Codex, standalone copies for other providers, updates and rollback, see

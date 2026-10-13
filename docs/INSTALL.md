@@ -5,8 +5,8 @@ standard library. Native plugin installation also requires a host that supports
 that plugin format. The repository is public, so cloning needs no login.
 
 ```sh
-git clone https://github.com/pashbel/session-workflow.git
-cd session-workflow
+git clone https://github.com/pashbel/estafeta.git
+cd estafeta
 python3 scripts/workflow.py check
 ```
 
@@ -24,7 +24,7 @@ language.
    terminal and file access, say so before installing anything.
 2. **Python.** Find Python 3.9+: `python3`, `python` or `py -3`.
 3. **Source.** Reuse an existing clone and update it only by fast-forward.
-   Otherwise run `git clone https://github.com/pashbel/session-workflow.git`
+   Otherwise run `git clone https://github.com/pashbel/estafeta.git`
    into a stable user directory outside any skills directory. No login is needed.
 4. **Route.** If this profile already has the native plugin, update it through
    the host instead of adding a copy. Otherwise use the portable route below.
@@ -91,7 +91,7 @@ The repo contains an OpenAI marketplace catalog, a portable `plugin.json`, and a
 Codex compatibility manifest. On a CLI with the plugin commands below:
 
 ```sh
-codex plugin marketplace add pashbel/session-workflow
+codex plugin marketplace add pashbel/estafeta
 codex plugin add estafeta@pashbel-estafeta
 codex plugin list --marketplace pashbel-estafeta --json
 ```
@@ -105,7 +105,7 @@ See [OpenAI packaging documentation](https://developers.openai.com/plugins/build
 ## Claude Code plugin
 
 ```sh
-claude plugin marketplace add pashbel/session-workflow
+claude plugin marketplace add pashbel/estafeta
 claude plugin install estafeta@pashbel-estafeta
 claude plugin details estafeta
 ```

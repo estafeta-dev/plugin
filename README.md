@@ -15,10 +15,11 @@ _In practice:_
 - _"Use session-end" saves the exact next step for whoever continues: another
   chat, another agent or another machine._
 
-> [!NOTE]
-> estafeta is built for long, multi-session projects; a small one-off
-> task does not need it. The runtime is covered by tests, but its effect on
-> model results is still being measured.
+<picture>
+  <source media="(max-width: 600px)" srcset="packs/session-workflow/assets/note-small.svg">
+  <source media="(max-width: 1000px)" srcset="packs/session-workflow/assets/note-medium.svg">
+  <img src="packs/session-workflow/assets/note.svg" alt="Note: estafeta is built for long, multi-session projects; a small one-off task does not need it. The runtime is covered by tests, but its effect on model results is still being measured.">
+</picture>
 
 ## Getting started
 
@@ -28,15 +29,15 @@ others) and Python 3.9+.
 ### Option 1. Ask your agent
 
 ```text
-Install estafeta from https://github.com/pashbel/session-workflow
+Install estafeta from https://github.com/pashbel/estafeta
 for this agent: follow "Agent installation" in docs/INSTALL.md.
 ```
 
 ### Option 2. Use the terminal
 
 ```sh
-git clone https://github.com/pashbel/session-workflow.git
-cd session-workflow
+git clone https://github.com/pashbel/estafeta.git
+cd estafeta
 python3 scripts/workflow.py install --all-detected
 ```
 
