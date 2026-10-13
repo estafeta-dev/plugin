@@ -1,5 +1,7 @@
 # Session Workflow
 
+
+
 Session Workflow lets coding agents carry one project across many chats, agents
 and machines: each new session resumes from the project's own files, not from
 chat history.
