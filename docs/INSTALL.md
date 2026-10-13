@@ -92,8 +92,8 @@ Codex compatibility manifest. On a CLI with the plugin commands below:
 
 ```sh
 codex plugin marketplace add pashbel/session-workflow
-codex plugin add session-workflow@pashbel-session-workflow
-codex plugin list --marketplace pashbel-session-workflow --json
+codex plugin add estafeta@pashbel-estafeta
+codex plugin list --marketplace pashbel-estafeta --json
 ```
 
 If Git access is configured differently for the host, add the authenticated local
@@ -106,25 +106,36 @@ See [OpenAI packaging documentation](https://developers.openai.com/plugins/build
 
 ```sh
 claude plugin marketplace add pashbel/session-workflow
-claude plugin install session-workflow@pashbel-session-workflow
-claude plugin details session-workflow
+claude plugin install estafeta@pashbel-estafeta
+claude plugin details estafeta
 ```
 
 The local-clone alternative is `claude plugin marketplace add .`. Reload plugins
 or start a new session. Plugin skills use namespaced commands:
 
 ```text
-/session-workflow:session-start
-/session-workflow:plan-and-orchestrate
-/session-workflow:session-handover
-/session-workflow:session-end
-/session-workflow:session-guide
+/estafeta:session-start
+/estafeta:plan-and-orchestrate
+/estafeta:session-handover
+/estafeta:session-end
+/estafeta:session-guide
 ```
 
 See [Claude marketplace documentation](https://code.claude.com/docs/en/plugin-marketplaces).
 Do not enable a duplicate standalone copy alongside the plugin unless you
 intentionally select its distinct source. Existing standalone installations can
 keep using the portable route without migration.
+
+## Naming compatibility
+
+estafeta is the plugin's new name. Its native plugin ID is `estafeta`, and the
+marketplace ID is `pashbel-estafeta`. If the old `session-workflow` native plugin
+is enabled, disable it through the host's plugin manager before enabling
+estafeta, so the same skills are discovered from one source.
+
+Existing standalone installations can update through the portable installer.
+Skill names and saved project records remain compatible: the runtime continues
+to use `.agent-state/session-workflow` and the existing handover markers.
 
 ## Upgrading from 2.x
 

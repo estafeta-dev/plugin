@@ -1,4 +1,4 @@
-# Session Workflow commands
+# estafeta commands
 
 Run `python3 SCRIPT --root ROOT <command>` (`py -3` on Windows). SCRIPT is this
 skill's `scripts/session.py`; ROOT is the project's Git root. Each call prints

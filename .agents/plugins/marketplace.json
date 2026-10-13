@@ -1,11 +1,11 @@
 {
-  "name": "pashbel-session-workflow",
+  "name": "pashbel-estafeta",
   "interface": {
-    "displayName": "Session Workflow"
+    "displayName": "estafeta"
   },
   "plugins": [
     {
-      "name": "session-workflow",
+      "name": "estafeta",
       "source": {
         "source": "local",
         "path": "./packs/session-workflow"

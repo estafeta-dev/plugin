@@ -1,4 +1,6 @@
-# Session Workflow 3.0.0
+# estafeta 3.0.0
+
+![estafeta — Pass the context & Keep building.](assets/cover.webp)
 
 Four skills act on one durable project record:
 
@@ -88,7 +90,7 @@ once.
 Claude Code 2.1.275 or later:
 
 ```text
-/plugin install session-workflow --marketplace pashbel/session-workflow
+/plugin install estafeta --marketplace pashbel/session-workflow
 ```
 
 For Codex, standalone copies for other providers, updates and rollback, see

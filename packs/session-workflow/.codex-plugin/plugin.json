@@ -1,5 +1,5 @@
 {
-  "name": "session-workflow",
+  "name": "estafeta",
   "version": "3.0.0",
   "description": "Resumable multi-session projects: checkpoints, phased plans with recorded checks, handovers and safe parallel sessions.",
   "author": {
@@ -9,7 +9,7 @@
   "homepage": "https://github.com/pashbel/session-workflow",
   "skills": "./skills/",
   "interface": {
-    "displayName": "Session Workflow",
+    "displayName": "estafeta",
     "shortDescription": "Resumable development across sessions and providers",
     "longDescription": "Resumable multi-session projects: checkpoints, phased plans with recorded checks, handovers and safe parallel sessions.",
     "developerName": "pashbel",
@@ -20,7 +20,7 @@
     ],
     "websiteURL": "https://github.com/pashbel/session-workflow",
     "defaultPrompt": [
-      "Use session-guide to learn how Session Workflow works.",
+      "Use session-guide to learn how estafeta works.",
       "Use session-start to resume this project.",
       "Use plan-and-orchestrate to execute the authorized plan."
     ]

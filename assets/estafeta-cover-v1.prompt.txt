@@ -1,0 +1,16 @@
+Generated with the built-in image_gen tool.
+Reference: the user-supplied image.png sports photograph.
+
+Use case: photorealistic-natural.
+Asset type: wide horizontal cover photograph for the Estafeta plugin, approximately 16:9, with space for a text logo to be added later.
+
+Input image 1 is a visual reference for dramatic black-and-white sports photography, a low camera angle, deep blacks and an energetic human gesture. Create a new scene of a relay handoff.
+
+Primary request: an exceptionally stylish, authentic-looking 1970s sports photograph of exactly two adult athletes sprinting and passing a relay baton. A tight, dynamic close-up of the exchange, captured at its most decisive split second. The hands, forearms and baton are the main subject, large and clearly readable. Both runners are moving in the same direction: the trailing runner reaches forward to give the baton, while the leading runner extends an open hand backward to receive it. Show one straight, smooth relay baton being transferred between two distinct, anatomically correct hands. The donor holds one end and the recipient's fingers are beginning to close around the other end. The passing action must be unmistakable.
+
+Composition and camera: an unusual very low three-quarter side angle, camera close to baton height and looking slightly upward, wide-angle photographic perspective, a subtle tilted horizon and forceful diagonal lines. Crop the athletes boldly around their upper bodies and hips; emphasize their muscular arms, twisting torsos and forward momentum. Position the handoff across the middle/lower portion of the frame. Preserve a quiet, dark area of sky in the upper portion, about a quarter of the image, usable for an added wordmark without covering the exchange. Make the image compelling as a horizontal editorial cover.
+
+Style and lighting: genuine 1970s analogue black-and-white 35mm reportage photography, pushed film, visible organic silver grain, rich charcoal shadows, luminous skin highlights, slight halation and a softly worn silver-gelatin print texture. Dramatic low directional sunlight like the supplied reference. Crisp enough hands and baton, with restrained directional motion blur in the background and moving clothing. The background is a subdued, out-of-focus outdoor running track; the athletes wear unbranded period-appropriate running clothes. Natural skin, sweat and fabric texture.
+
+Color palette: strictly monochrome black, white and neutral grays, absolutely no color or sepia tint.
+Constraints: photographic realism; an intimate crop rather than a distant full-body view; physically believable relay mechanics and human anatomy; exactly two athletes and one baton; no text, logo, lettering, watermark, borders, collage or interface elements. Avoid contemporary glossy fitness advertising, excessively clean digital rendering, exaggerated HDR, extra fingers, fused hands or an obscured baton.

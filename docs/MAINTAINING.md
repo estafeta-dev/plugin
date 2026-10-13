@@ -1,6 +1,9 @@
 # Maintenance
 
 Canonical source: [pashbel/session-workflow](https://github.com/pashbel/session-workflow).
+The plugin's public name is **estafeta**, its native plugin ID is `estafeta`,
+and its marketplace ID is `pashbel-estafeta`.
+
 Edit `packs/session-workflow/shared/` for the shared contract, conditional guides,
 and `runtime/` implementation/schema. Each skill receives a complete copy so it
 can be installed independently.
@@ -23,15 +26,23 @@ every provider, copy and link modes, explicit profile destinations and retiring
 former skill names. `check` also rejects stale version strings in skill files.
 Native Windows/Linux execution must be validated separately from the macOS runs.
 
+## Naming compatibility
+
+The source repository and `packs/session-workflow` path retain their existing
+names. Keep the `workflow-pack: session-workflow` ownership marker, installation
+receipt and backup paths, `.agent-state/session-workflow` state directory,
+handover markers and machine-ID hash prefix compatible with earlier versions.
+Renaming these requires a separate migration; changing the public name does not.
+
 ## Build archives
 
 ```sh
-python3 scripts/workflow.py bundle --output /path/to/session-workflow-source.zip
-python3 scripts/workflow.py bundle --plugin-only --output /path/to/session-workflow-plugin.zip
+python3 scripts/workflow.py bundle --output /path/to/estafeta-source.zip
+python3 scripts/workflow.py bundle --plugin-only --output /path/to/estafeta-plugin.zip
 ```
 
 The full archive contains sources, docs, catalogs and the installer. The plugin
-archive contains the manifests and five self-contained skills. Both get SHA-256
+archive contains the manifests, README, cover and five self-contained skills. Both get SHA-256
 sidecars. Credentials, project runtime state and Git history are excluded.
 The repository is public. Before publishing new benchmark evidence or logs,
 replace local paths (for example with `$HOME` or `$OUTPUTS`) and remove personal

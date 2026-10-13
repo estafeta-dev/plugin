@@ -1,7 +1,7 @@
 ---
 name: session-handover
 description: >-
-  Create or update the developer handover of a Session Workflow project
+  Create or update the developer handover of an estafeta project
   (HANDOVER.md by default): what changed and why, checks actually run,
   limitations and next steps, with runtime facts in a generated block. Use for
   session-handover, a milestone handover, «обнови handover» or passing Session

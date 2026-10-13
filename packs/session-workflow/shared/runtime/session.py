@@ -727,7 +727,7 @@ def ensure_ignored(store):
                       optional=True)
         if tracked is None or tracked:
             return
-    atomic_write(marker, "# Session Workflow runtime state: local logs and machine facts.\n*\n")
+    atomic_write(marker, "# estafeta runtime state: local logs and machine facts.\n*\n")
 
 
 def location(s, store):

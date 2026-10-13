@@ -1,5 +1,5 @@
 {
-  "name": "session-workflow",
+  "name": "estafeta",
   "version": "3.0.0",
   "description": "Resumable multi-session projects: checkpoints, phased plans with recorded checks, handovers and safe parallel sessions.",
   "author": {

@@ -7,7 +7,7 @@ from pathlib import Path
 from statistics import median
 
 NAMES={'website':'Сайт мастер-классов','game':'Игра «Найди пару»','app':'Прототип доски задач'}
-ARMS={'baseline':'Без скилов','lite':'Lite-конвенции','workflow':'С Session Workflow'}
+ARMS={'baseline':'Без скилов','lite':'Lite-конвенции','workflow':'С estafeta'}
 ABOUT={'baseline':'ноль включённых скилов, только общий промпт.',
        'lite':'ноль включённых скилов, как без скилов; на месте активации в промпт вставлен '
               'текст prompts/lite.md — конвенции файлов проекта без скилов и runtime.',
@@ -76,7 +76,7 @@ def main(out):
     order_text=(f"Порядок случайный и сбалансированный, seed `{protocol['seed']}`: в каждом повторе "
                 'перемешаны сценарии, внутри сценария — группы.' if 'seed' in protocol else
                 'Порядок фиксирован и записан в протоколе.')
-    lines=['# Session Workflow: сравнение групп','',
+    lines=['# estafeta: сравнение групп','',
            'Общий промпт одинаков во всех группах; они различаются только блоком на месте '
            'активации скилов. Каждый случай — две свежие сессии: первая версия, затем '
            'изменение требования без истории предыдущего чата.','']
@@ -119,7 +119,7 @@ def main(out):
                 'а не статистически подтверждённый эффект.','']
     else:lines+=['Нет группы «Без скилов» или групп для сравнения с ней.','']
     if 'lite' in arms and 'workflow' in arms:
-        lines+=['## Session Workflow против Lite-конвенций','',
+        lines+=['## estafeta против Lite-конвенций','',
                 '| Сценарий | Изменение времени | Изменение токенов | Финальные требования: lite → workflow |',
                 '|---|---:|---:|---:|']
         for s in scenarios:
@@ -185,7 +185,7 @@ def main(out):
                 f"{audit['passed']}/{audit['total']} проверок целостности: различных чатов — {audit.get('chat_count','?')}, "
                 'нативная телеметрия, одинаковые стартовые файлы, изоляция скилов, '+scope+
                 'неизменность замороженных исходников и копий плагина, завершение '
-                'сессий и освобождение фаз в группе Session Workflow. [Детали](audit.json).','']
+                'сессий и освобождение фаз в группе estafeta. [Детали](audit.json).','']
     if review.get('conclusion'):lines+=['## Вывод','',review['conclusion'],'']
     order_note=('Случайный сбалансированный порядок распределяет влияние времени запуска между '
                 'группами, но не устраняет его. ' if 'seed' in protocol else
@@ -241,7 +241,7 @@ def main(out):
     footer=html.escape(f'Значения: медиана (мин–макс) по повторам; unknown — значения нет хотя бы в одном '
                        f'повторе, нулём оно не заменяется. Повторов на ячейку: {reps}; сравнение описательное, '
                        'без статистической значимости. Кэшированные токены входят в input; денежная цена не измерялась.')
-    (out/'report.html').write_text('''<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Session Workflow — сравнение групп</title><style>body{font:16px/1.5 system-ui;margin:0;background:#f2f4f8;color:#172235}main{max-width:1200px;margin:auto;padding:40px 24px}h1{font-size:36px;line-height:1.15}h2{font-size:23px}article{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}section{background:white;padding:24px;border-radius:18px;border:1px solid #dce1e8}.sample{margin-top:26px}.sample b,.sample label,.sample small{display:block}.sample span{color:#53702b}.sample small{color:#536174}.track{height:12px;background:#eef0f4;border-radius:8px;margin:6px 0 16px}.track.unknown{background:repeating-linear-gradient(45deg,#eef0f4 0 6px,#e1e4ea 6px 12px)}.track i{height:12px;display:block;border-radius:8px}a{color:#315ba9}.note{max-width:1000px;padding:24px;background:white;border-radius:18px;margin-top:24px}footer{color:#536174;margin-top:24px}@media(max-width:850px){article{grid-template-columns:1fr}}</style><main><h1>Session Workflow: реальная цена управления сессией</h1><p>'''+subtitle+'''</p><article>'''+''.join(cards)+'''</article><div class="note">'''+conclusion+'''</div><footer>'''+footer+'''<p><a href="REPORT.ru.md">Полный отчёт</a> · <a href="results.json">Сырые метрики</a> · <a href="protocol.json">Протокол</a></p></footer></main></html>''')
+    (out/'report.html').write_text('''<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>estafeta — сравнение групп</title><style>body{font:16px/1.5 system-ui;margin:0;background:#f2f4f8;color:#172235}main{max-width:1200px;margin:auto;padding:40px 24px}h1{font-size:36px;line-height:1.15}h2{font-size:23px}article{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}section{background:white;padding:24px;border-radius:18px;border:1px solid #dce1e8}.sample{margin-top:26px}.sample b,.sample label,.sample small{display:block}.sample span{color:#53702b}.sample small{color:#536174}.track{height:12px;background:#eef0f4;border-radius:8px;margin:6px 0 16px}.track.unknown{background:repeating-linear-gradient(45deg,#eef0f4 0 6px,#e1e4ea 6px 12px)}.track i{height:12px;display:block;border-radius:8px}a{color:#315ba9}.note{max-width:1000px;padding:24px;background:white;border-radius:18px;margin-top:24px}footer{color:#536174;margin-top:24px}@media(max-width:850px){article{grid-template-columns:1fr}}</style><main><h1>estafeta: реальная цена управления сессией</h1><p>'''+subtitle+'''</p><article>'''+''.join(cards)+'''</article><div class="note">'''+conclusion+'''</div><footer>'''+footer+'''<p><a href="REPORT.ru.md">Полный отчёт</a> · <a href="results.json">Сырые метрики</a> · <a href="protocol.json">Протокол</a></p></footer></main></html>''')
     print(str(out/'REPORT.ru.md'))
 
 if __name__=='__main__':

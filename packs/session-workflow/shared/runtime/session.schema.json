@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Session Workflow runtime interfaces",
+  "title": "estafeta runtime interfaces",
   "description": "The bundled validator implements the keywords used here; no third-party packages are required. State schema 2; schema 1 is upgraded once with a state.v1.json copy.",
   "$comment": "Machine state is authoritative only for runtime-owned facts; decisions and acceptance remain externally judged.",
   "$defs": {

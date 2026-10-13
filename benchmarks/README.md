@@ -1,11 +1,11 @@
-# Session Workflow development benchmark
+# estafeta development benchmark
 
 A repeated, fresh-chat comparison of the same coding agent on three small
 offline scenarios: a website, a browser game and a web application. Each case
 has an initial implementation and a requirement change in a fresh chat that
 receives only project files.
 
-**Status:** prepared for Session Workflow 3.0.0, not executed. The 3.0 runtime
+**Status:** prepared for estafeta 3.0.0, not executed. The 3.0 runtime
 and instructions (`session-handover`, `HANDOVER.md` for new projects, no
 `operation` commands) have not been measured by any model run yet.
 

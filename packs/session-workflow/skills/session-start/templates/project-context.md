@@ -9,7 +9,7 @@
 - Plan: <docs/plans/<workstream>.md, or none for a small task>
 - Handover: <HANDOVER.md>
 - Architecture and runbooks: <existing links>
-- Workflow: Session Workflow; machine state in .agent-state/session-workflow (not edited by hand)
+- Workflow: estafeta; machine state in .agent-state/session-workflow (not edited by hand)
 
 ## Current focus
 

@@ -1,12 +1,12 @@
 {
-  "name": "pashbel-session-workflow",
+  "name": "pashbel-estafeta",
   "description": "Resumable multi-session projects: checkpoints, phased plans with recorded checks, handovers and safe parallel sessions.",
   "owner": {
     "name": "pashbel"
   },
   "plugins": [
     {
-      "name": "session-workflow",
+      "name": "estafeta",
       "source": "./packs/session-workflow",
       "description": "Resumable multi-session projects: checkpoints, phased plans with recorded checks, handovers and safe parallel sessions."
     }

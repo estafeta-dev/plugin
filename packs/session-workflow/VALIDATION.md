@@ -1,4 +1,22 @@
-# Validation - session-workflow 3.0.0
+# Validation - estafeta 3.0.0
+
+## estafeta rename (2026-10-13)
+
+The public name, plugin ID (`estafeta`) and marketplace ID
+(`pashbel-estafeta`) were synchronized across packaging and documentation.
+The existing project state paths, handover markers and skill ownership markers
+remain compatible with earlier installations.
+
+Rechecked on macOS with Python 3.9.6: runtime 57/57, installer 19/19, benchmark
+ordering 3/3, `workflow.py check`, and both Claude plugin validators passed.
+Installer checks include the renamed plugin-only archive and installing from a
+relocated full source archive. Codex native discovery was not exercised because
+the Codex CLI is unavailable on this host.
+
+The remaining results, including instruction byte counts, describe the original
+3.0.0 payload tested before the public rename.
+
+## Original 3.0.0 review (2026-10-12)
 
 Executed on macOS on 2026-10-12 from the source checkout. Runtime and installer
 checks use disposable repositories and profile directories. No model or API

@@ -1,6 +1,8 @@
-# Session Workflow
+# estafeta
 
-Session Workflow lets coding agents carry one project across many chats, agents
+![estafeta — Pass the context & Keep building.](packs/session-workflow/assets/cover.webp)
+
+estafeta lets coding agents carry one project across many chats, agents
 and machines: each new session resumes from the project's own files, not from
 chat history.
 
@@ -14,7 +16,7 @@ _In practice:_
   chat, another agent or another machine._
 
 > [!NOTE]
-> Session Workflow is built for long, multi-session projects; a small one-off
+> estafeta is built for long, multi-session projects; a small one-off
 > task does not need it. The runtime is covered by tests, but its effect on
 > model results is still being measured.
 
@@ -26,7 +28,7 @@ others) and Python 3.9+.
 ### Option 1. Ask your agent
 
 ```text
-Install Session Workflow from https://github.com/pashbel/session-workflow
+Install estafeta from https://github.com/pashbel/session-workflow
 for this agent: follow "Agent installation" in docs/INSTALL.md.
 ```
 

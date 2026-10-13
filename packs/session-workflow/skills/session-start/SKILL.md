@@ -1,10 +1,10 @@
 ---
 name: session-start
 description: >-
-  Start or resume a long-running Session Workflow project (PROJECT.md, plan,
+  Start or resume a long-running estafeta project (PROJECT.md, plan,
   HANDOVER.md and a saved checkpoint): reconcile the workspace with the last
   session, then continue the requested task. Use for session-start, resuming a
-  Session Workflow project, bootstrapping one, «начни сессию» or «возобнови
+  estafeta project, bootstrapping one, «начни сессию» or «возобнови
   проект с чекпоинта». Not for projects already run by another start/end
   workflow.
 license: Apache-2.0

@@ -1,10 +1,10 @@
 ---
 name: session-guide
 description: >-
-  Explain Session Workflow to a user in a few lines: what each skill is for,
+  Explain estafeta to a user in a few lines: what each skill is for,
   what to say and when, which files appear, what the agent never does without
   asking, and where the current project stands. Use for session-guide, "how does
-  Session Workflow work", «как работает session workflow» or «объясни
+  estafeta work", «как работает estafeta», «как работает session workflow» or «объясни
   session-start». Read-only: it starts and changes nothing.
 license: Apache-2.0
 metadata:

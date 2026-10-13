@@ -5,7 +5,7 @@ workflow and of where the current project stands.
 
 Use the same skill names with every provider. Plain-language requests work
 everywhere. Native plugin hosts may add a namespace; in Claude Code, for example,
-it is `/session-workflow:session-start`.
+it is `/estafeta:session-start`.
 
 Use the workflow for projects that span sessions, devices, agents or phased work.
 A small isolated edit does not need it.

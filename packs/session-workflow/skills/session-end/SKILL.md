@@ -1,11 +1,11 @@
 ---
 name: session-end
 description: >-
-  End a Session Workflow session with a resumable checkpoint: save the next
+  End an estafeta session with a resumable checkpoint: save the next
   action, render final facts into the handover and stop processes this session
-  started. Use for session-end, pausing or finishing work on a Session Workflow
+  started. Use for session-end, pausing or finishing work on an estafeta
   project, or a device or agent handoff; «сохрани чекпоинт и заверши
-  session-workflow». Finishing one task does not end the session. Not for
+  estafeta» or «заверши session-workflow». Finishing one task does not end the session. Not for
   projects already run by another end workflow.
 license: Apache-2.0
 metadata:

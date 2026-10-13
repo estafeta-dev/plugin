@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Portable session-workflow management. Python 3.9+, standard library only."""
+"""Portable estafeta management. Python 3.9+, standard library only."""
 from __future__ import annotations
 
 import argparse
@@ -16,7 +16,10 @@ import zipfile
 from datetime import datetime, timezone
 
 ROOT = Path(__file__).resolve().parent.parent
+# Preserve source paths and installed-skill ownership across the public rename.
 PACK = ROOT / "packs/session-workflow"
+PLUGIN_NAME = "estafeta"
+MARKETPLACE_NAME = "pashbel-estafeta"
 SHARED_RESOURCES = ("workflow-contract.md", "quickstart.md", "runtime.md")
 RUNTIME_RESOURCES = ("session.py", "session.schema.json")
 # Former names are removed from destinations only when they are copies of this pack.
@@ -75,7 +78,7 @@ def check():
     manifest = names()
     for resource in PLUGIN_MANIFESTS:
         metadata = json.loads((PACK / resource).read_text(encoding="utf-8"))
-        if metadata.get("name") != "session-workflow" or metadata.get("version") != version():
+        if metadata.get("name") != PLUGIN_NAME or metadata.get("version") != version():
             raise ValueError(f"Plugin identity/version mismatch: {resource}")
         if not metadata.get("description") or not metadata.get("author", {}).get("name"):
             raise ValueError(f"Missing plugin description/author: {resource}")
@@ -86,12 +89,12 @@ def check():
     for resource in CATALOGS:
         catalog = json.loads((ROOT / resource).read_text(encoding="utf-8"))
         plugins = catalog.get("plugins", [])
-        if catalog.get("name") != "pashbel-session-workflow" or len(plugins) != 1:
+        if catalog.get("name") != MARKETPLACE_NAME or len(plugins) != 1:
             raise ValueError(f"Marketplace identity/entry mismatch: {resource}")
         entry = plugins[0]
         source = entry.get("source")
         path = source.get("path") if isinstance(source, dict) else source
-        if entry.get("name") != "session-workflow" or path != "./packs/session-workflow":
+        if entry.get("name") != PLUGIN_NAME or path != "./packs/session-workflow":
             raise ValueError(f"Marketplace does not resolve the packaged plugin: {resource}")
         if not (ROOT / path / "plugin.json").is_file():
             raise ValueError(f"Missing marketplace plugin source: {resource}")
@@ -121,7 +124,7 @@ def check():
                 raise ValueError(f"Retired resource present: {name}/{resource}; run sync-contract")
         for doc in base.rglob("*"):
             if doc.is_file() and doc.suffix in (".md", ".yaml", ".json"):
-                for found in re.findall(r"(?i)session[- ]workflow\D{0,12}?(\d+\.\d+\.\d+)", doc.read_text(encoding="utf-8")):
+                for found in re.findall(r"(?i)(?:estafeta|session[- ]workflow)\D{0,12}?(\d+\.\d+\.\d+)", doc.read_text(encoding="utf-8")):
                     if found != version():
                         raise ValueError(f"Stale version {found} in {doc.relative_to(PACK)}")
         for resource in RUNTIME_RESOURCES:
@@ -300,14 +303,14 @@ def bundle(args):
     output = Path(args.output).expanduser().absolute()
     output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as z:
-        bases = [PACK / "skills"] if args.plugin_only else [ROOT / "packs", ROOT / "scripts", ROOT / "docs"]
+        bases = [PACK / "skills", PACK / "assets"] if args.plugin_only else [ROOT / "packs", ROOT / "scripts", ROOT / "docs"]
         for base in bases:
             for p in sorted(base.rglob("*")):
                 if p.is_file() and "__pycache__" not in p.parts and p.name != ".DS_Store":
-                    z.write(p, "session-workflow/" + p.relative_to(PACK if args.plugin_only else ROOT).as_posix())
-        extras = (*PLUGIN_MANIFESTS, "LICENSE") if args.plugin_only else ("README.md", "LICENSE", ".gitattributes", ".gitignore", *CATALOGS)
+                    z.write(p, PLUGIN_NAME + "/" + p.relative_to(PACK if args.plugin_only else ROOT).as_posix())
+        extras = (*PLUGIN_MANIFESTS, "README.md", "LICENSE") if args.plugin_only else ("README.md", "LICENSE", ".gitattributes", ".gitignore", *CATALOGS)
         for name in extras:
-            z.write((PACK if args.plugin_only else ROOT) / name, "session-workflow/" + name)
+            z.write((PACK if args.plugin_only else ROOT) / name, PLUGIN_NAME + "/" + name)
     digest = hashlib.sha256(output.read_bytes()).hexdigest()
     output.with_suffix(output.suffix + ".sha256").write_text(f"{digest}  {output.name}\n", encoding="utf-8")
     print(f"Bundle: {output}\nSHA-256: {digest}")
@@ -352,7 +355,7 @@ def main(argv=None):
             print(f"Synchronized contract {version()} into {len(names())} skills")
             return 0
         if args.command == "check":
-            print(f"Verified session-workflow {version()}: {len(check())} portable skills")
+            print(f"Verified estafeta {version()}: {len(check())} portable skills")
             return 0
         return {"install": install, "status": status, "bundle": bundle}[args.command](args)
     except (OSError, ValueError) as exc:

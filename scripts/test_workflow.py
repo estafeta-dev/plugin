@@ -60,11 +60,13 @@ class WorkflowTests(unittest.TestCase):
         with zipfile.ZipFile(archive) as z:
             self.assertIsNone(z.testzip())
             z.extractall(unpacked)
-        plugin = unpacked / "session-workflow"
+        plugin = unpacked / "estafeta"
         self.assertEqual((plugin / "LICENSE").read_bytes(), (w.ROOT / "LICENSE").read_bytes())
+        self.assertIn("](assets/cover.webp)", (plugin / "README.md").read_text(encoding="utf-8"))
+        self.assertEqual((plugin / "assets/cover.webp").read_bytes(), (w.PACK / "assets/cover.webp").read_bytes())
         for manifest in w.PLUGIN_MANIFESTS:
             data = json.loads((plugin / manifest).read_text(encoding="utf-8"))
-            self.assertEqual(data["name"], "session-workflow")
+            self.assertEqual(data["name"], "estafeta")
             self.assertEqual(data["version"], w.version())
         for name in w.names():
             self.assertEqual(w.tree_digest(plugin / "skills" / name), w.tree_digest(w.PACK / "skills" / name))
@@ -184,7 +186,12 @@ class WorkflowTests(unittest.TestCase):
         extracted = self.base / "another device"
         with zipfile.ZipFile(archive) as z:
             z.extractall(extracted)
-        script = extracted / "session-workflow/scripts/workflow.py"
+        script = extracted / "estafeta/scripts/workflow.py"
+        source = extracted / "estafeta"
+        self.assertIn("](packs/session-workflow/assets/cover.webp)",
+                      (source / "README.md").read_text(encoding="utf-8"))
+        self.assertEqual((source / "packs/session-workflow/assets/cover.webp").read_bytes(),
+                         (w.PACK / "assets/cover.webp").read_bytes())
         result = subprocess.run([sys.executable, str(script), "install", "--dest", str(self.target)],
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -227,10 +234,13 @@ class WorkflowTests(unittest.TestCase):
         isolated = self.base / "pack"
         shutil.copytree(w.PACK, isolated)
         template = isolated / "skills/session-start/templates/project-context.md"
-        template.write_text(template.read_text(encoding="utf-8") + "\n- Workflow: session-workflow 2.3.0\n", encoding="utf-8")
-        with patch.object(w, "PACK", isolated):
-            self.assertEqual(self.install(), 1)
-        self.assertFalse(self.target.exists())
+        original = template.read_text(encoding="utf-8")
+        for product in ("estafeta", "session-workflow"):
+            with self.subTest(product=product):
+                template.write_text(original + f"\n- Workflow: {product} 2.3.0\n", encoding="utf-8")
+                with patch.object(w, "PACK", isolated):
+                    self.assertEqual(self.install(), 1)
+                self.assertFalse(self.target.exists())
 
     def test_copy_mode_accepts_crlf_source_after_relocation(self):
         isolated = self.base / "crlf-pack"

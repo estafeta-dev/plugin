@@ -1,4 +1,4 @@
 interface:
   display_name: "Session Guide"
-  short_description: "How Session Workflow works and where this project stands"
-  default_prompt: "Use $session-guide to explain how Session Workflow works and where this project stands."
+  short_description: "How estafeta works and where this project stands"
+  default_prompt: "Use $session-guide to explain how estafeta works and where this project stands."

@@ -2,7 +2,7 @@
 """Reproducible repeated, fresh-chat development benchmark. Python 3.9 stdlib.
 
 Arms: baseline (no skills), lite (no skills, plus prompts/lite.md conventions)
-and workflow (exactly the four project-local Session Workflow skills). A case is
+and workflow (exactly the four project-local estafeta skills). A case is
 scenario x arm x repetition; cases run in a recorded, seeded, balanced order.
 """
 import argparse

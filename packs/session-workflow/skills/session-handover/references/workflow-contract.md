@@ -1,4 +1,4 @@
-# Session Workflow contract - 3.0.0
+# estafeta contract - 3.0.0
 
 Load once per chat. Commands: [quickstart](quickstart.md). Rare options:
 [runtime](runtime.md).
