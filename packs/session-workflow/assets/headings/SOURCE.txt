@@ -1,0 +1,6 @@
+Nuosu SIL Regular, converted to SVG outlines for README headings.
+Source: https://github.com/google/fonts/tree/main/ofl/nuosusil
+Font SHA-256: 632b875ede95598e162da0323fb79e0f4dace58643ddbe29bfc460c78ee2ac64
+License: SIL Open Font License 1.1; see NuosuSIL-OFL.txt.
+Tracking: H1 -0.04em, H2 -0.03em, H3 -0.025em.
+Body text and note typography use the existing fonts.

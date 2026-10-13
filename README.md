@@ -1,4 +1,6 @@
-# estafeta
+<a name="estafeta"></a>
+
+# ![estafeta](packs/session-workflow/assets/headings/estafeta.svg)
 
 ![estafeta — Pass the context & Keep building.](packs/session-workflow/assets/cover.webp)
 
@@ -21,19 +23,27 @@ _In practice:_
   <img src="packs/session-workflow/assets/note.svg" alt="Note: estafeta is built for long, multi-session projects; a small one-off task does not need it. The runtime is covered by tests, but its effect on model results is still being measured.">
 </picture>
 
-## Getting started
+<a name="getting-started"></a>
+
+## ![Getting started](packs/session-workflow/assets/headings/getting-started.svg)
+
+![Getting started — the starting signal.](packs/session-workflow/assets/getting-started.gif)
 
 You need an agent with terminal access (Claude Code, Codex, Gemini CLI and
 others) and Python 3.9+.
 
-### Option 1. Ask your agent
+<a name="option-1-ask-your-agent"></a>
+
+### ![Option 1. Ask your agent](packs/session-workflow/assets/headings/option-1-ask-your-agent.svg)
 
 ```text
 Install estafeta from https://github.com/pashbel/estafeta
 for this agent: follow "Agent installation" in docs/INSTALL.md.
 ```
 
-### Option 2. Use the terminal
+<a name="option-2-use-the-terminal"></a>
+
+### ![Option 2. Use the terminal](packs/session-workflow/assets/headings/option-2-use-the-terminal.svg)
 
 ```sh
 git clone https://github.com/pashbel/estafeta.git
@@ -55,6 +65,8 @@ Then ask any agent: "Use session-guide. Explain how this works."
 
 ---
 
-## License
+<a name="license"></a>
+
+## ![License](packs/session-workflow/assets/headings/license.svg)
 
 This project is licensed under the [Apache License 2.0](LICENSE).

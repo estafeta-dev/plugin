@@ -1,4 +1,6 @@
-# estafeta 3.0.0
+<a name="estafeta-300"></a>
+
+# ![estafeta 3.0.0](assets/headings/estafeta-300.svg)
 
 ![estafeta — Pass the context & Keep building.](assets/cover.webp)
 
@@ -11,7 +13,9 @@ where the project stands, without changing anything. Handover updates can
 happen at any milestone; they do not end the session.
 Ending a session checkpoints unfinished work and never marks it complete.
 
-## How to invoke
+<a name="how-to-invoke"></a>
+
+## ![How to invoke](assets/headings/how-to-invoke.svg)
 
 Use the same plain request with any provider; slash or dollar syntax is optional.
 
@@ -24,7 +28,9 @@ Use the same plain request with any provider; slash or dollar syntax is optional
 | Record a milestone | Use session-handover. Record the current changes and evidence. |
 | End / hand off | Use session-end. Save context to continue on another device. |
 
-## Project record
+<a name="project-record"></a>
+
+## ![Project record](assets/headings/project-record.svg)
 
 Existing projects keep their documents. New projects get:
 
@@ -38,7 +44,9 @@ The runtime keeps execution state (phases, owners, checks, checkpoints) in
 [contract](shared/workflow-contract.md) holds all shared rules, and the
 [quickstart](shared/quickstart.md) holds every command an ordinary session needs.
 
-## Changes in 3.0.0
+<a name="changes-in-300"></a>
+
+## ![Changes in 3.0.0](assets/headings/changes-in-300.svg)
 
 All changes come from a review of 2.4.1. Each failure listed below was
 reproduced first and now has a regression test.
@@ -75,7 +83,9 @@ State schema 1 is upgraded on its first write, and the original is kept as
 `state.v1.json`. Unresolved operations from the dropped ledger are reported
 once.
 
-## Limits
+<a name="limits"></a>
+
+## ![Limits](assets/headings/limits.svg)
 
 - Claims rely on cooperating agents: they do not block direct file edits, and
   the local lock does not coordinate separate machines.
@@ -85,7 +95,9 @@ once.
   Check the first real session on each new provider before treating its
   behaviour as validated.
 
-## Install
+<a name="install"></a>
+
+## ![Install](assets/headings/install.svg)
 
 Claude Code 2.1.275 or later:
 
