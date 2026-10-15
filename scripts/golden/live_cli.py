@@ -102,6 +102,11 @@ def main():
     git(root, "init", "-q")
     (root / ".gitignore").write_text(".agent-state/\n__pycache__/\n")
     (root / "greet.py").write_text('def greet(name: str) -> str:\n    return f"Hello, {name}!"\n')
+    (root / "PROJECT.md").write_text(
+        "# Live golden fixture\n\n## AI providers\n\n<!-- estafeta:providers:start -->\n"
+        "| Provider | Allowed | Models | Notes |\n| --- | --- | --- | --- |\n"
+        f"| {args.provider} | consult, write | {args.model} | authorized live golden run |\n"
+        "<!-- estafeta:providers:end -->\n", encoding="utf-8")
     git(root, "add", ".")
     git(root, "commit", "-qm", "fixture")
     orch, results = "orch-" + args.provider, {}

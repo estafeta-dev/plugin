@@ -25,6 +25,17 @@ HERE = Path(__file__).resolve().parent
 SOURCE = HERE.parent / "packs/session-workflow/shared/runtime/session.py"
 SCENARIOS = HERE / "golden/relay-scenarios.json"
 STUB = HERE / "golden/stub_worker.py"
+POLICY = """# Golden fixture
+
+## AI providers
+
+<!-- estafeta:providers:start -->
+| Provider | Allowed | Models | Notes |
+| --- | --- | --- | --- |
+| stub | consult, review, write | any | deterministic golden worker |
+| codex | consult, review, write | any | host tasks in golden scenarios |
+<!-- estafeta:providers:end -->
+"""
 
 
 class StepFailed(Exception):
@@ -105,6 +116,9 @@ class Run:
             if done.returncode:
                 raise StepFailed("git failed: " + done.stderr[-500:])
             return {"ok": True}
+        if action == "file":
+            (self.root / step["path"]).write_text(self.fill(step["text"]), encoding="utf-8")
+            return {"ok": True}
         if action == "packet":
             header = {**self.fill(step["header"]), "version": 1, "runtime": [sys.executable, str(SOURCE)]}
             text = (f"# Relay packet\n\n```relay-packet\n{json.dumps(header, indent=2)}\n```\n\n"
@@ -158,6 +172,7 @@ def fixture(base):
         subprocess.run(["git", "-C", str(root), *args], check=True)
     (root / "a.txt").write_text("a\n")
     (root / ".gitignore").write_text(".agent-state/\n")
+    (root / "PROJECT.md").write_text(POLICY, encoding="utf-8")
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
     subprocess.run(["git", "-C", str(root), "-c", "user.name=Golden", "-c", "user.email=golden@example.invalid",
                     "-c", "commit.gpgsign=false", "commit", "-qm", "fixture"], check=True)

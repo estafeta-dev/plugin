@@ -102,6 +102,11 @@ class SessionTests(unittest.TestCase):
         self.assertEqual(result, code, output.getvalue())
         return json.loads(output.getvalue())
 
+    def allow_providers(self, rows="| codex | consult, review, write | any |\n| stub | consult, review, write | any |\n"):
+        (self.root / "PROJECT.md").write_text(
+            "# Project\n\n## AI providers\n\n<!-- estafeta:providers:start -->\n| Provider | Allowed | Models |\n"
+            "| --- | --- | --- |\n" + rows + "<!-- estafeta:providers:end -->\n", encoding="utf-8")
+
     def setup_sessions(self, *names):
         for name in names or ("one",):
             self.call("begin", "--session", name, "--parallel")
@@ -148,6 +153,7 @@ class SessionTests(unittest.TestCase):
         self.assertTrue(r.relay_problems({"mode": "consult"}, ["not", "an", "object"]))
 
     def test_delegate_start_validates_before_effects(self):
+        self.allow_providers()
         self.setup_sessions()
         self.plan()
         packet = self.base / "packet.md"
@@ -183,6 +189,7 @@ class SessionTests(unittest.TestCase):
         self.assertFalse(r.relay_in_scope("srcx/a.py", ["src"]))
 
     def test_relay_blocked_result_with_bad_checks_is_malformed_not_a_crash(self):
+        self.allow_providers()
         self.setup_sessions()
         self.plan()
         packet = self.base / "packet.md"
@@ -196,6 +203,7 @@ class SessionTests(unittest.TestCase):
         self.assertFalse((r.relay_dir(self.store, "w") / "result.json").exists())
 
     def test_relay_unknown_worker_is_not_closed_without_confirmation(self):
+        self.allow_providers()
         self.setup_sessions()
         packet = self.base / "packet.md"
         packet.write_text("Ask\n")
@@ -217,6 +225,7 @@ class SessionTests(unittest.TestCase):
         self.assertEqual((view["status"], view["adopted_from"]), ("cancelled", "one"))
 
     def test_relay_adoption_moves_the_kept_worker_process_to_the_adopter(self):
+        self.allow_providers()
         self.setup_sessions()
         packet = self.base / "packet.md"
         packet.write_text("Ask\n")
@@ -230,6 +239,7 @@ class SessionTests(unittest.TestCase):
 
     def test_relay_delegations_of_a_vanished_checkout_move_to_the_successor_after_save(self):
         # Open delegations block a takeover here, but a session whose checkout vanished is still superseded.
+        self.allow_providers()
         self.call("begin", "--session", "one")
         packet = self.base / "packet.md"
         packet.write_text("Ask\n")
@@ -252,6 +262,7 @@ class SessionTests(unittest.TestCase):
 
     def relay_writer(self, edits, claimed, after_check=None, dirty=None):
         """Orchestrator 'one' delegates phase A in its own checkout; worker 'w1' edits and checks there."""
+        self.allow_providers()
         self.setup_sessions()
         self.plan([{"id": "A", "title": "A", "acceptance": "Works", "paths": ["a.txt"], "required_checks": ["unit"]}])
         for name, text in (dirty or {}).items():
@@ -291,6 +302,7 @@ class SessionTests(unittest.TestCase):
         self.assertIn("Worker evidence would not satisfy DONE", " | ".join(stale["discrepancies"]))
 
     def test_relay_duplicate_keys_make_the_result_malformed(self):
+        self.allow_providers()
         self.setup_sessions()
         packet = self.base / "packet.md"
         packet.write_text("Review\n")
@@ -325,6 +337,7 @@ class SessionTests(unittest.TestCase):
         self.assertEqual(result["superseded"][0]["transferred"], ["A"])
 
     def test_open_delegations_block_takeover_even_when_idle(self):
+        self.allow_providers()
         self.call("begin", "--session", "one")
         packet = self.base / "packet.md"
         packet.write_text("Ask\n")
@@ -333,6 +346,34 @@ class SessionTests(unittest.TestCase):
         result = self.call("begin", "--session", "two")["result"]
         self.assertNotIn("superseded", result)
         self.assertIn("one has open delegations", result["warnings"][-1])
+
+    def test_provider_policy_is_parsed_from_the_marked_table(self):
+        self.assertIsNone(r.provider_policy(self.store))
+        self.allow_providers("| `Codex` | consult; review | gpt-6.1-sol, gpt-6-luna |\n| gemini | none | - |\n"
+                             "| claude | orchestrate, write | any |\n")
+        policy = r.provider_policy(self.store)["providers"]
+        self.assertEqual(policy["codex"], {"modes": ["consult", "review"], "orchestrate": False,
+                                           "models": ["gpt-6.1-sol", "gpt-6-luna"]})
+        self.assertEqual(policy["gemini"]["modes"], [])
+        self.assertTrue(policy["claude"]["orchestrate"])
+        (self.root / "PROJECT.md").write_text("<!-- estafeta:providers:start -->\n<!-- estafeta:providers:start -->\n"
+                                              "<!-- estafeta:providers:end -->\n")
+        with self.assertRaises(r.Problem):
+            r.provider_policy(self.store)
+
+    def test_status_flags_a_missing_provider_policy_and_delegation_waits_for_it(self):
+        self.setup_sessions()
+        self.assertEqual(self.call("status")["result"]["provider_policy"], "missing")
+        packet = self.base / "packet.md"
+        packet.write_text("Ask\n")
+        start = ("delegate", "start", "--session", "one", "--name", "q", "--provider", "codex", "--mode", "consult",
+                 "--packet", str(packet), "--host-ref", "t3:1")
+        self.assertEqual(self.call(*start, code=3)["error"]["code"], "providers_unset")
+        self.allow_providers("| codex | consult | gpt-6.1-sol |\n")
+        self.assertNotIn("provider_policy", self.call("status")["result"])
+        self.assertEqual(self.call(*start, code=3)["error"]["code"], "provider_not_allowed")
+        self.call(*start, "--model", "gpt-6.1-sol")
+        self.assertEqual(r.relay_load(self.store, "q")["model"], "gpt-6.1-sol")
 
     # Snapshots and startup
 

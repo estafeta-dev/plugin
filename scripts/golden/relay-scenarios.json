@@ -1121,6 +1121,289 @@
    ]
   },
   {
+   "id": "provider-policy",
+   "description": "On first use the project has no AI providers table: the runtime flags it and refuses delegation until the user's choice is recorded, then enforces providers, modes and models from it.",
+   "steps": [
+    {
+     "name": "orchestrator begins",
+     "do": "runtime",
+     "args": [
+      "begin",
+      "--session",
+      "orch"
+     ]
+    },
+    {
+     "name": "the project has not chosen its providers yet",
+     "do": "file",
+     "path": "PROJECT.md",
+     "text": "# Project\n"
+    },
+    {
+     "name": "status flags the missing policy for session-start to ask",
+     "do": "runtime",
+     "args": [
+      "status",
+      "--session",
+      "orch"
+     ],
+     "expect": [
+      {
+       "path": "result.provider_policy",
+       "equals": "missing"
+      }
+     ]
+    },
+    {
+     "name": "consult packet",
+     "do": "packet",
+     "file": "ask.md",
+     "header": {
+      "mode": "consult",
+      "name": "ask",
+      "orchestrator": "orch",
+      "workspace": "{root}"
+     },
+     "body": "Question."
+    },
+    {
+     "name": "delegation waits for the user's decision",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "start",
+      "--session",
+      "orch",
+      "--name",
+      "ask-0",
+      "--provider",
+      "codex",
+      "--mode",
+      "consult",
+      "--packet",
+      "{packets}/ask.md",
+      "--host-ref",
+      "t3:ask-0",
+      "--model",
+      "gpt-6.1-sol"
+     ],
+     "expect": [
+      {
+       "path": "ok",
+       "equals": false
+      },
+      {
+       "path": "error.code",
+       "equals": "providers_unset"
+      }
+     ]
+    },
+    {
+     "name": "the agent records the user's answer in PROJECT.md",
+     "do": "file",
+     "path": "PROJECT.md",
+     "text": "# Project\n\n## AI providers\n\n<!-- estafeta:providers:start -->\n| Provider | Allowed | Models | Notes |\n| --- | --- | --- | --- |\n| claude | orchestrate, consult, review, write | any | this agent |\n| codex | consult | gpt-6.1-sol | reviews by T3 task |\n| gemini | none | - | no API key |\n<!-- estafeta:providers:end -->\n"
+    },
+    {
+     "name": "status no longer flags it",
+     "do": "runtime",
+     "args": [
+      "status",
+      "--session",
+      "orch"
+     ],
+     "expect": [
+      {
+       "path": "result.provider_policy",
+       "absent": true
+      }
+     ]
+    },
+    {
+     "name": "providers lists the recorded policy",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "providers"
+     ],
+     "expect": [
+      {
+       "path": "result.policy.providers.codex.modes",
+       "equals": [
+        "consult"
+       ]
+      },
+      {
+       "path": "result.policy.providers.gemini.modes",
+       "equals": []
+      }
+     ]
+    },
+    {
+     "name": "a mode the project did not allow is refused",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "start",
+      "--session",
+      "orch",
+      "--name",
+      "ask-1",
+      "--provider",
+      "codex",
+      "--mode",
+      "review",
+      "--packet",
+      "{packets}/ask.md",
+      "--host-ref",
+      "t3:ask-1",
+      "--model",
+      "gpt-6.1-sol"
+     ],
+     "expect": [
+      {
+       "path": "error.code",
+       "equals": "provider_not_allowed"
+      }
+     ]
+    },
+    {
+     "name": "a model the project did not allow is refused",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "start",
+      "--session",
+      "orch",
+      "--name",
+      "ask-2",
+      "--provider",
+      "codex",
+      "--mode",
+      "consult",
+      "--packet",
+      "{packets}/ask.md",
+      "--host-ref",
+      "t3:ask-2",
+      "--model",
+      "gpt-5.6-terra"
+     ],
+     "expect": [
+      {
+       "path": "error.code",
+       "equals": "provider_not_allowed"
+      },
+      {
+       "path": "error.message",
+       "contains": "gpt-6.1-sol"
+      }
+     ]
+    },
+    {
+     "name": "a provider marked none is refused",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "start",
+      "--session",
+      "orch",
+      "--name",
+      "ask-3",
+      "--provider",
+      "gemini",
+      "--mode",
+      "consult",
+      "--packet",
+      "{packets}/ask.md",
+      "--host-ref",
+      "t3:ask-3"
+     ],
+     "expect": [
+      {
+       "path": "error.code",
+       "equals": "provider_not_allowed"
+      }
+     ]
+    },
+    {
+     "name": "an unlisted provider is refused",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "start",
+      "--session",
+      "orch",
+      "--name",
+      "ask-4",
+      "--provider",
+      "cursor",
+      "--mode",
+      "consult",
+      "--packet",
+      "{packets}/ask.md",
+      "--host-ref",
+      "t3:ask-4"
+     ],
+     "expect": [
+      {
+       "path": "error.code",
+       "equals": "provider_not_allowed"
+      }
+     ]
+    },
+    {
+     "name": "the allowed provider, mode and model are accepted",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "start",
+      "--session",
+      "orch",
+      "--name",
+      "ask-5",
+      "--provider",
+      "codex",
+      "--mode",
+      "consult",
+      "--packet",
+      "{packets}/ask.md",
+      "--host-ref",
+      "t3:ask-5",
+      "--model",
+      "gpt-6.1-sol"
+     ],
+     "expect": [
+      {
+       "path": "ok",
+       "equals": true
+      },
+      {
+       "path": "result.transport",
+       "equals": "host"
+      }
+     ]
+    },
+    {
+     "name": "refusals created no records",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "status"
+     ],
+     "expect": [
+      {
+       "path": "result.delegations.0.name",
+       "equals": "ask-5"
+      },
+      {
+       "path": "result.delegations.1",
+       "absent": true
+      }
+     ]
+    }
+   ]
+  },
+  {
    "id": "failures",
    "description": "The orchestrator catches a hung worker, a garbled reply, a writer that claims checks it never ran, and survives its own session ending with work still open.",
    "steps": [

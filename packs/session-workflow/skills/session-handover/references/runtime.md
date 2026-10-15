@@ -128,13 +128,22 @@ recorded PID. On Windows the supervisor ends the process tree through
 
 | Command | Purpose |
 | --- | --- |
-| `delegate providers` | Read-only: provider CLIs on PATH and their versions |
+| `delegate providers` | Read-only: provider CLIs on PATH, their versions and the project's AI providers table |
 | `delegate start --session ID --name N --provider P --mode consult\|review\|write --packet F [--model M] [--phase P --worker-session W] [--workspace DIR] [--timeout S] -- CMD...` | Record a delegation and run a CLI worker as a supervised runtime `relay-N` |
 | `delegate start ... --host-ref REF` (no command) | Record a host-native child task, such as a T3 task ID |
 | `delegate status [--session ID] [--name N]` | Read-only: records, worker runtime, writer facts and result |
 | `delegate collect --session ID --name N [--from FILE] [--confirm-stopped]` | Parse the worker's final RELAY-RESULT block from `--from`, `reply.txt` or the CLI worker's stdout |
 | `delegate cancel --session ID --name N [--confirm-stopped]` | Stop a CLI worker, or close a host task you already cancelled |
 
+- **Provider policy.** `delegate start` requires the marked AI providers table
+  in the context document (PROJECT.md), between
+  `<!-- estafeta:providers:start -->` and `<!-- estafeta:providers:end -->`.
+  - Each row gives the provider ID, its allowed modes (`consult`, `review`,
+    `write`, plus the informational `orchestrate`, or `none`) and its models
+    (`any` or IDs).
+  - Without the table the error is `providers_unset`, and `status`/`begin`
+    report `provider_policy: missing`. A provider, mode or model outside it
+    gives `provider_not_allowed`.
 - Records live in `delegations/<name>/` under the state directory: the packet,
   `record.json` and `result.json` with SHA-256 hashes. `state.json` and its
   schema do not change, so a 3.0 runtime can still take part as a worker.

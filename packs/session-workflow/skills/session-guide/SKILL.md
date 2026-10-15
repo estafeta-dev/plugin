@@ -52,6 +52,9 @@ another device continues from those files instead of from chat history.
 **Files.**
 - PROJECT.md holds the goal and next step, docs/plans/ the plan, and
   HANDOVER.md what is done and verified. Read and edit them freely.
+- PROJECT.md also lists the AI providers this project may use. On first use
+  the agent asks you once and records your answer; delegation to anything
+  else is refused.
 - `.agent-state/` holds machine state. It is never committed or edited by hand.
 
 **What the agent does by itself.**

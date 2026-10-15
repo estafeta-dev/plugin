@@ -16,6 +16,14 @@ user explicitly asks for it for this delegation.
 | Claude Code | `--dangerously-skip-permissions`, `--allow-dangerously-skip-permissions`, `--permission-mode bypassPermissions` |
 | Gemini CLI | `--approval-mode yolo`, `-y`/`--yolo`; `--skip-trust` only as described below |
 
+## Provider IDs
+
+`--provider` names what actually runs, and it must match a row of the
+project's AI providers table. Use the plain provider ID (`claude`, `codex`,
+`gemini`, `antigravity`). When a host has several accounts of one provider and
+the project distinguishes them, use the host's instance ID, such as T3's
+`claude-pricefx`.
+
 ## Host-native tasks
 
 Prefer these when the host offers them: the host owns authentication,

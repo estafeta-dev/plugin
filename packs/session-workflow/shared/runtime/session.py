@@ -786,6 +786,11 @@ def brief(state, store, session_id=None, live=None):
               "live_workspace": compact_snapshot(live) if live is not None else None}
     if actor and actor["status"] != "active":
         result["session_status"] = "ended: " + actor["ended_reason"]
+    try:
+        if provider_policy(store, state) is None:
+            result["provider_policy"] = "missing"
+    except Problem:
+        result["provider_policy"] = "invalid"
     delegations = relay_open(store)
     if delegations:
         result["open_delegations"] = [{"name": r["name"], "provider": r["provider"], "mode": r["mode"],
@@ -1470,6 +1475,50 @@ def relay_runtime(store, state, record):
     return runtime_view(store, process) if process else {"status": "unknown", "reason": "No runtime record"}
 
 
+POLICY_BEGIN, POLICY_END = "<!-- estafeta:providers:start -->", "<!-- estafeta:providers:end -->"
+RELAY_MODES = ("consult", "review", "write")
+
+
+def provider_policy(store, state=None):
+    """The project's AI providers table from the context document, or None when the user has not decided yet."""
+    name = (state or {}).get("documents", {}).get("context") or "PROJECT.md"
+    path = relative_path(store.root, name)
+    if not path.is_file():
+        return None
+    text = path.read_text(encoding="utf-8")
+    if POLICY_BEGIN not in text and POLICY_END not in text:
+        return None
+    if text.count(POLICY_BEGIN) != 1 or text.count(POLICY_END) != 1 or text.index(POLICY_BEGIN) > text.index(POLICY_END):
+        raise Problem("providers_invalid", f"Ambiguous AI providers markers in {name}; keep exactly one block", 3)
+    providers = {}
+    for line in text[text.index(POLICY_BEGIN) + len(POLICY_BEGIN):text.index(POLICY_END)].splitlines():
+        cells = [c.strip().strip("`").strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 2 or not cells[0] or cells[0].lower() == "provider" or set(cells[0]) <= set("-: "):
+            continue
+        uses = {u for u in re.split(r"[,;\s]+", cells[1].lower()) if u}
+        models = [m for m in re.split(r"[,;\s]+", cells[2]) if m] if len(cells) > 2 else []
+        providers[cells[0].lower()] = {
+            "modes": [m for m in RELAY_MODES if m in uses], "orchestrate": "orchestrate" in uses,
+            "models": [] if not models or models[0].lower() in ("any", "*", "-") else models}
+    return {"file": name, "providers": providers}
+
+
+def check_policy(store, state, provider, mode, model):
+    policy = provider_policy(store, state)
+    if policy is None:
+        raise Problem("providers_unset", "This project has no AI providers table yet. Ask the user which providers, "
+                      "modes and models this project allows, record them in PROJECT.md (agent-relay, step 1), then "
+                      "retry", 3)
+    entry = policy["providers"].get(provider.lower())
+    if entry is None or mode not in entry["modes"]:
+        allowed = ", ".join(f"{p}: {'/'.join(e['modes']) or 'none'}" for p, e in sorted(policy["providers"].items()))
+        raise Problem("provider_not_allowed", f"{policy['file']} does not allow {provider} for {mode} "
+                      f"(allowed: {allowed or 'no providers'}). Ask the user before changing the table", 3)
+    if entry["models"] and model not in entry["models"]:
+        raise Problem("provider_not_allowed", f"{policy['file']} allows {provider} only with "
+                      f"{', '.join(entry['models'])}; pass one of them with --model", 3)
+
+
 def relay_providers():
     found = []
     for name in PROVIDER_CLIS:
@@ -1496,6 +1545,7 @@ def relay_start(store, state, args):
     cli = args.inline is not None or bool(args.argv_file)
     if relay_dir(store, name).exists():
         raise Problem("delegation", "Delegation name already used; choose a new name", 3)
+    check_policy(store, state, args.provider, mode, args.model or "")
     packet = Path(require(args.packet, "--packet")).expanduser()
     text = packet.read_text(encoding="utf-8")
     if not text.strip():
@@ -2318,7 +2368,12 @@ def dispatch(store, args):
     if args.inline is not None and not accepts_command:
         raise Problem("arguments", "Only 'check run', 'runtime launch' and 'delegate start' accept a command after --")
     if command == "delegate" and args.action == "providers":
-        return None, relay_providers()
+        found = relay_providers()
+        try:
+            found["policy"] = provider_policy(store, store.load() if store.path.exists() else None)
+        except Problem as exc:
+            found["policy"] = {"error": str(exc)}
+        return None, found
     if command == "delegate" and args.action != "status":
         require(args.session, "--session")
     if command == "snapshot":
