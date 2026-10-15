@@ -1,0 +1,41 @@
+assets/favicon/concepts/02-handoff.svg
+  ai_agent 1-8
+assets/favicon/concepts/03-monogram.svg
+  ai_agent 1-7
+assets/favicon/README.md
+  ai_agent 1-17
+assets/favicon/preview.html
+  ai_agent 1-33
+AGENTS.md
+  ai_agent 1-2
+assets/favicon/favicon.svg
+  ai_agent 1-5
+HANDOVER.md
+  s_2638420ed9bd91::t_26342bba01e8c3 1-27
+assets/favicon/design.json
+  ai_agent 1-32
+assets/favicon/comparison.svg
+  s_2638420ed9bd91::t_0b48ce5938580e 1-78
+docs/CONTINUING.md
+  ai_agent 1-39
+assets/favicon/concepts/01-spark.svg
+  ai_agent 1-5
+PROJECT.md
+  ai_agent 1-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "8559853e8949b0ef51d5ffb9c2351158fba23ff2",
+  "prompts": {},
+  "sessions": {
+    "s_2638420ed9bd91": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a13f41-6186-7132-9d5b-c712cc72963c",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Pavlo Bieliaiev <25230576+pashbel@users.noreply.github.com>"
+    }
+  }
+}
