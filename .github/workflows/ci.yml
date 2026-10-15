@@ -25,8 +25,11 @@ jobs:
       - name: Pack validation
         run: python scripts/workflow.py check
       - name: Runtime tests
+        if: success() || failure()
         run: python scripts/test_session.py
       - name: Installer tests
+        if: success() || failure()
         run: python scripts/test_workflow.py
       - name: Golden path integration tests (stub worker)
+        if: success() || failure()
         run: python scripts/test_relay.py

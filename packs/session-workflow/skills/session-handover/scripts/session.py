@@ -508,7 +508,12 @@ def scope_inventory(store, state, p):
             raise Problem("too_large", f"{len(hashable)} changed or untracked files in the phase scope; add "
                           "generated directories to .gitignore or narrow the phase paths", 6)
         for name, sha in zip(hashable, blob_hashes(root, hashable)):
-            inventory[name] = ("100755" if os.access(root / name, os.X_OK) else "100644") + ":" + sha
+            if os.name == "nt":
+                # Windows reports every file as executable and Git there ignores file modes: keep the index mode.
+                mode = inventory[name].split(":")[0] if name in inventory else "100644"
+            else:
+                mode = "100755" if os.access(root / name, os.X_OK) else "100644"
+            inventory[name] = mode + ":" + sha
     else:
         patterns, names = ignore_patterns(root), []
         for value in (["*"] if whole else p["paths"]):
@@ -1038,6 +1043,14 @@ def group_alive(pgid):
 def terminate_group(child, grace=4.0):
     """Stop the direct child and every descendant in the process group it leads."""
     if os.name == "nt":
+        # Ask the group to stop first (CTRL_BREAK reaches every process in it, and a running check records
+        # itself as abandoned), then force the remaining tree.
+        if child.poll() is None:
+            try:
+                os.kill(child.pid, signal.CTRL_BREAK_EVENT)
+                child.wait(timeout=grace)
+            except (OSError, subprocess.TimeoutExpired):
+                pass
         if child.poll() is None:
             subprocess.run(["taskkill", "/T", "/F", "/PID", str(child.pid)], capture_output=True)
         return
@@ -1068,7 +1081,7 @@ class Interrupted(Exception):
 @contextmanager
 def interrupt_guard():
     """Turn SIGTERM/SIGHUP into Interrupted while a check runs, so its separate process group is not orphaned."""
-    names = [n for n in ("SIGTERM", "SIGHUP") if hasattr(signal, n)]
+    names = [n for n in ("SIGTERM", "SIGHUP", "SIGBREAK") if hasattr(signal, n)]
     if threading.current_thread() is not threading.main_thread():
         yield
         return
@@ -1662,7 +1675,19 @@ def relay_collect(store, state, args):
                 used = str(source)
                 break
     if body is None:
-        record.update(status="malformed", error="No " + RELAY_OPEN + " ... " + RELAY_CLOSE + " block in the final answer")
+        error = "No " + RELAY_OPEN + " ... " + RELAY_CLOSE + " block in the final answer"
+        if record["transport"] == "cli" and not args.from_file:
+            # Diagnose a CLI that failed before answering, such as missing authentication.
+            runtime = relay_runtime(store, state, record)
+            _, process = relay_process(state, record)
+            tail = ""
+            log = relay_path(store, process["directory"]) / "stderr.log" if process else None
+            if log and log.is_file():
+                with open(log, "rb") as handle:
+                    handle.seek(max(0, log.stat().st_size - 600))
+                    tail = " ".join(handle.read().decode("utf-8", "replace").split())
+            error += f"; worker exit code {runtime.get('exit_code')}" + (f"; stderr ends: {tail}" if tail else "")
+        record.update(status="malformed", error=error)
         relay_save(store, record)
         return relay_view(store, state, record), adopted
     try:

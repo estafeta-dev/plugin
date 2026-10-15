@@ -69,7 +69,7 @@ def write(packet, args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("packet")
-    parser.add_argument("--behavior", choices=("normal", "hang", "garbage", "lie"), default="normal")
+    parser.add_argument("--behavior", choices=("normal", "hang", "garbage", "lie", "crash"), default="normal")
     parser.add_argument("--answer", default="")
     parser.add_argument("--verdict", default="APPROVE")
     parser.add_argument("--finding", action="append", default=[])
@@ -78,6 +78,10 @@ def main():
     packet = packet_header(args.packet)
     if args.behavior == "hang":
         time.sleep(600)
+    if args.behavior == "crash":
+        # Like a CLI without authentication: an error on stderr, nothing on stdout.
+        print(json.dumps({"error": {"message": "Please set an Auth method", "code": 41}}), file=sys.stderr)
+        return 41
     if args.behavior == "garbage":
         print("I think the task is done.")
         return 0

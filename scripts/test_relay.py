@@ -129,14 +129,20 @@ class Run:
             raise StepFailed("delegation still running at the wait timeout")
         if action == "no_process":
             deadline = time.monotonic() + step.get("timeout", 10)
+            if os.name == "nt":
+                query = ["powershell", "-NoProfile", "-Command",
+                         "Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine "
+                         f"-like '*{step['pattern']}*' }} | ForEach-Object {{ $_.ProcessId }}"]
+            else:
+                query = ["pgrep", "-f", step["pattern"]]
             while True:  # a stopped process may need a moment to be reaped
-                done = subprocess.run(["pgrep", "-f", step["pattern"]], capture_output=True, text=True)
+                done = subprocess.run(query, capture_output=True, text=True)
                 if not done.stdout.strip() or time.monotonic() > deadline:
                     break
                 time.sleep(0.2)
             if done.stdout.strip():
                 ps = subprocess.run(["ps", "-o", "pid=,ppid=,pgid=,command=", "-p", ",".join(done.stdout.split())],
-                                    capture_output=True, text=True)
+                                    capture_output=True, text=True) if os.name != "nt" else done
                 raise StepFailed("process still running: " + (ps.stdout.strip() or done.stdout.strip()))
             return {"ok": True}
         raise StepFailed("unknown action " + action)

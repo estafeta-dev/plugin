@@ -14,7 +14,7 @@ user explicitly asks for it for this delegation.
 | --- | --- |
 | Codex | `--yolo`, `--dangerously-bypass-approvals-and-sandbox`, `--sandbox danger-full-access`, `--ignore-rules` |
 | Claude Code | `--dangerously-skip-permissions`, `--allow-dangerously-skip-permissions`, `--permission-mode bypassPermissions` |
-| Gemini CLI | `--approval-mode yolo`, `-y`/`--yolo`, `--skip-trust` |
+| Gemini CLI | `--approval-mode yolo`, `-y`/`--yolo`; `--skip-trust` only as described below |
 
 ## Host-native tasks
 
@@ -53,16 +53,24 @@ A writer must write the shared state directory to record its session, claims
 and checks. Grant exactly that directory (`{state_dir}`) in addition to its
 workspace. Do not grant the repository's `.git`: the integrator commits.
 
-### Codex (`codex exec`), docs
+### Codex (`codex exec`), verified live
 
 | Mode | argv after `--` |
 | --- | --- |
 | consult, review | `codex exec --sandbox read-only --cd {workspace} --output-last-message {reply_file} -m MODEL {packet_text}` |
 | write | `codex exec --sandbox workspace-write --add-dir {state_dir} --cd {workspace} --output-last-message {reply_file} -m MODEL {packet_text}` |
 
-- Reasoning effort: `-c model_reasoning_effort="high"`.
-- Codex needs a Git checkout and an existing `codex login` or `CODEX_API_KEY`.
-- It reads AGENTS.md and finds skills in `.agents/skills` and `~/.agents/skills`.
+- **Always pass `--sandbox`.** A user's `~/.codex/config.toml` may default to
+  `sandbox_mode = "danger-full-access"`, and only the flag overrides it.
+  `approval_policy = "never"` is fine headless: a command needing escalation
+  fails instead of waiting.
+- **Reasoning effort:** `-c model_reasoning_effort="high"`.
+- **Login:** Codex needs a Git checkout and an existing `codex login` or
+  `CODEX_API_KEY`. The CLI reuses the desktop app's login in `~/.codex`.
+- **Instructions and skills:** it reads AGENTS.md and finds skills in
+  `.agents/skills` and `~/.agents/skills`.
+- **Verified with codex-cli 0.162.1 and gpt-6.1-sol:** consult and a sandboxed
+  write in a linked worktree. `collect` read the block from `{reply_file}`.
 
 ### Claude Code (`claude -p`), verified live
 
@@ -110,12 +118,22 @@ SANDBOX is one argv item:
 | consult, review | `gemini -m MODEL -p {packet_text} --output-format json --approval-mode plan` |
 | write | `gemini -m MODEL -p {packet_text} --output-format json --approval-mode auto_edit --include-directories {state_dir}` |
 
-- Since June 2026, personal Google accounts use Antigravity instead. Gemini
-  CLI keeps working with paid Gemini API, Vertex or enterprise keys.
-- Headless shell approval and folder trust for a fresh worktree are
-  unverified. Prefer a host-native task (for example T3's Antigravity
-  provider) for Gemini writers.
-- Exit codes: 1 means an error, 42 bad input, 53 the turn limit.
+- **Personal accounts.** Since June 2026, personal Google accounts use
+  Antigravity instead. Gemini CLI keeps working with paid Gemini API, Vertex
+  or enterprise keys.
+- **Flags.** They match gemini 0.64.0 `--help`.
+- **No login.** Without one, the CLI exits with code 41 and prints its error
+  as JSON on stderr. `collect` records `malformed` with that exit code and
+  stderr, never success (verified).
+- **Untrusted folders.** A fresh worktree is an untrusted folder, and Gemini
+  then lowers `--approval-mode` to `default`, so a headless writer cannot
+  edit. Trusting the folder is the user's decision: add the repository to
+  Gemini's trusted folders once, or pass `--skip-trust` for a worktree the
+  orchestrator created from a commit it trusts.
+- **Prefer Antigravity.** A host-native Antigravity task (for example in T3)
+  needs no API key, so prefer it for Gemini models.
+- **Exit codes:** 1 means an error, 41 no authentication, 42 bad input, 53 the
+  turn limit.
 
 ## Resuming a worker
 

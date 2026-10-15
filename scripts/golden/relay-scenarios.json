@@ -1389,6 +1389,91 @@
      ]
     },
     {
+     "name": "a worker that fails before answering is started",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "start",
+      "--session",
+      "orch",
+      "--expect-revision",
+      "{rev}",
+      "--name",
+      "crash-1",
+      "--provider",
+      "stub",
+      "--mode",
+      "consult",
+      "--packet",
+      "{packets}/consult.md",
+      "--",
+      "{python}",
+      "{stub}",
+      "{packet}",
+      "--behavior",
+      "crash"
+     ]
+    },
+    {
+     "name": "it exits with its error code",
+     "do": "wait",
+     "delegation": "crash-1",
+     "expect": [
+      {
+       "path": "status",
+       "equals": "exited"
+      },
+      {
+       "path": "runtime.exit_code",
+       "equals": 41
+      }
+     ]
+    },
+    {
+     "name": "collect reports the exit code and stderr instead of accepting anything",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "collect",
+      "--session",
+      "orch",
+      "--name",
+      "crash-1"
+     ],
+     "expect": [
+      {
+       "path": "result.status",
+       "equals": "malformed"
+      },
+      {
+       "path": "result.error",
+       "contains": "exit code 41"
+      },
+      {
+       "path": "result.error",
+       "contains": "Please set an Auth method"
+      }
+     ]
+    },
+    {
+     "name": "cancel closes it",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "cancel",
+      "--session",
+      "orch",
+      "--name",
+      "crash-1"
+     ],
+     "expect": [
+      {
+       "path": "result.status",
+       "equals": "cancelled"
+      }
+     ]
+    },
+    {
      "name": "worktree for the lying worker",
      "do": "git",
      "args": [
