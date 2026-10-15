@@ -10,7 +10,7 @@ description: >-
 license: Apache-2.0
 metadata:
   workflow-pack: session-workflow
-  workflow-version: "3.0.0"
+  workflow-version: "3.1.0"
 ---
 
 # Session start
@@ -28,7 +28,9 @@ Read the [contract](references/workflow-contract.md) and
 2. **Read the resume point** in the result:
    - `next_action`, `prior_checkpoint`, `documents` and `warnings`;
    - `superseded`: earlier chats here, whose claims are now yours;
-   - `other_active_sessions`.
+   - `other_active_sessions`;
+   - `open_delegations`: work handed to other agents. Collect or cancel it
+     with agent-relay before relying on the phases involved.
 3. **Reconcile** the context, plan and handover named in `documents` (or the
    project's doc map) with `git status` and recent changes. If
    `prior_checkpoint.workspace_changed` is true, inspect what changed before

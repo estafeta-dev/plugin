@@ -10,7 +10,7 @@ description: >-
 license: Apache-2.0
 metadata:
   workflow-pack: session-workflow
-  workflow-version: "3.0.0"
+  workflow-version: "3.1.0"
 ---
 
 # Session handover

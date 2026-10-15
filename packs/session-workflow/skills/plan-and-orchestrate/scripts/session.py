@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Deterministic session facts and state. Python 3.9+, standard library only.
 
-No model/API calls, no Git writes, no project migration and no kills outside a
-process group this runtime supervises. Run --help or a subcommand --help for
+No model/API calls of its own (a delegated worker is a command the caller
+supplies), no Git writes, no project migration and no kills outside a process
+group this runtime supervises. Run --help or a subcommand --help for
 the JSON CLI. See references/runtime.md.
 """
 from __future__ import annotations
@@ -16,11 +17,14 @@ import json
 import os
 from pathlib import Path
 import platform
+import posixpath
 import re
+import shutil
 import signal
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import uuid
 
@@ -777,6 +781,10 @@ def brief(state, store, session_id=None, live=None):
               "live_workspace": compact_snapshot(live) if live is not None else None}
     if actor and actor["status"] != "active":
         result["session_status"] = "ended: " + actor["ended_reason"]
+    delegations = relay_open(store)
+    if delegations:
+        result["open_delegations"] = [{"name": r["name"], "provider": r["provider"], "mode": r["mode"],
+                                       "status": r["status"], "orchestrator": r["session_id"]} for r in delegations[:20]]
     warnings = snapshot_warnings(live)
     if warnings:
         result["warnings"] = warnings
@@ -896,6 +904,8 @@ def begin(store, args):
             "Inspect the plan and choose a ready phase"
         new_checkpoint(store, state, session_id, next_action, workspace=live)
         store.save(state, "begin:" + session_id)
+        for item in superseded:
+            relay_transfer(store, item["id"], session_id)
         result = brief(state, store, session_id, live)
         if superseded:
             result["superseded"] = superseded
@@ -978,6 +988,10 @@ def facts_markdown(store, state, live):
              "| Phase | State | Owner | Latest checks |", "| --- | --- | --- | --- |", *rows, "",
              "Active sessions: " + ("; ".join(f"{cell(sid)} (next: {cell(s['checkpoint'].get('next_action', ''))})"
                                               for sid, s in active) or "none") + "."]
+    delegations = relay_open(store)
+    if delegations:
+        lines.append("Open delegations: " + "; ".join(f"{cell(r['name'])} ({cell(r['provider'])} {r['mode']}, "
+                                                      f"{r['status']})" for r in delegations[:10]) + ".")
     if ended:
         sid, s = max(ended, key=lambda item: item[1]["ended_at"])
         lines.append(f"Ended sessions: {len(ended)}; latest {cell(sid)} "
@@ -1021,7 +1035,7 @@ def group_alive(pgid):
         return True
 
 
-def terminate_group(child):
+def terminate_group(child, grace=4.0):
     """Stop the direct child and every descendant in the process group it leads."""
     if os.name == "nt":
         if child.poll() is None:
@@ -1031,7 +1045,7 @@ def terminate_group(child):
         os.killpg(child.pid, signal.SIGTERM)
     except ProcessLookupError:
         return
-    deadline = time.monotonic() + 4
+    deadline = time.monotonic() + grace
     while time.monotonic() < deadline:
         child.poll()
         if not group_alive(child.pid):
@@ -1047,6 +1061,27 @@ def group_kwargs():
     return {"start_new_session": True} if os.name != "nt" else {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
 
 
+class Interrupted(Exception):
+    pass
+
+
+@contextmanager
+def interrupt_guard():
+    """Turn SIGTERM/SIGHUP into Interrupted while a check runs, so its separate process group is not orphaned."""
+    names = [n for n in ("SIGTERM", "SIGHUP") if hasattr(signal, n)]
+    if threading.current_thread() is not threading.main_thread():
+        yield
+        return
+    def handler(signum, frame):
+        raise Interrupted()
+    previous = {n: signal.signal(getattr(signal, n), handler) for n in names}
+    try:
+        yield
+    finally:
+        for n, h in previous.items():
+            signal.signal(getattr(signal, n), h)
+
+
 def run_check(store, state, p, args, run_id, command, before):
     log = store.directory / "checks" / (run_id + ".log")
     log.parent.mkdir(parents=True, exist_ok=True)
@@ -1056,12 +1091,20 @@ def run_check(store, state, p, args, run_id, command, before):
             child = subprocess.Popen(command, cwd=store.root, stdout=output, stderr=subprocess.STDOUT,
                                      stdin=subprocess.DEVNULL, shell=False, **group_kwargs())
             try:
-                code = child.wait(timeout=args.timeout)
+                with interrupt_guard():
+                    code = child.wait(timeout=args.timeout)
                 outcome = "pass" if code == 0 else "fail"
             except subprocess.TimeoutExpired:
                 terminate_group(child)
                 child.wait()
                 code, outcome = None, "timeout"
+            except Interrupted:
+                # The caller was stopped (for example a timed-out delegated worker): stop the check's own group too,
+                # with a short grace so this finishes well inside the supervisor's longer relay grace period.
+                terminate_group(child, grace=1.0)
+                child.wait()
+                output.write(b"\n[session-workflow] check stopped because its caller was terminated\n")
+                code, outcome = None, "abandoned"
         except OSError as exc:
             output.write(str(exc).encode("utf-8", "replace"))
             code, outcome = None, "error"
@@ -1104,7 +1147,7 @@ def stop_runtime(store, record):
         return status
     directory = relative_path(store.directory, record["directory"])
     atomic_write(directory / "stop.json", canonical({"run_id": record["run_id"]}) + "\n")
-    deadline = time.monotonic() + 10
+    deadline = time.monotonic() + 15
     while time.monotonic() < deadline:
         status = runtime_view(store, record)
         if status["status"] != "running":
@@ -1126,10 +1169,14 @@ def supervise(spec_path):
     directory = spec_path.parent
     receipt_path = directory / "receipt.json"
     try:
-        with open(directory / "output.log", "ab") as output:
-            child = subprocess.Popen(spec["argv"], cwd=spec["root"], stdout=output, stderr=subprocess.STDOUT,
+        # A delegated worker's stderr (progress, tool output) stays apart from its final answer on stdout.
+        with open(directory / "output.log", "ab") as output, \
+                open(directory / spec.get("stderr", "output.log"), "ab") as errors:
+            child = subprocess.Popen(spec["argv"], cwd=spec["root"], stdout=output,
+                                     stderr=errors if spec.get("stderr") else subprocess.STDOUT,
                                      stdin=subprocess.DEVNULL, shell=False, **group_kwargs())
             stop, beat = directory / "stop.json", 0.0
+            started, limit, timed_out = time.monotonic(), spec.get("timeout"), False
             # Descendants keep the group alive after the leader exits; supervise until all are gone.
             while child.poll() is None or group_alive(child.pid):
                 if time.monotonic() - beat >= HEARTBEAT_SECONDS:
@@ -1138,33 +1185,45 @@ def supervise(spec_path):
                                  "leader_exited": child.returncode is not None}) + "\n", durable=False)
                     beat = time.monotonic()
                 if stop.exists() and read_json(stop).get("run_id") == spec["run_id"]:
-                    terminate_group(child)
+                    terminate_group(child, spec.get("grace", 4.0))
+                    break
+                if limit and time.monotonic() - started > limit:
+                    terminate_group(child, spec.get("grace", 4.0))
+                    timed_out = True
                     break
                 time.sleep(0.2)
             child.poll()
             receipt = {"run_id": spec["run_id"], "status": "exited", "exit_code": child.returncode,
                        "scope": "supervised process group" if os.name != "nt" else "supervised process tree"}
+            if timed_out:
+                receipt["timed_out"] = True
     except Exception as exc:
         receipt = {"run_id": spec["run_id"], "status": "unknown", "reason": str(exc)[:500]}
     atomic_write(receipt_path, canonical(receipt) + "\n")
 
 
-def launch_runtime(store, state, args, command):
-    key = args.session + "/" + args.name
+def launch_runtime(store, state, session_id, name, command, keep=False, cwd=None, timeout=None, run_id=None,
+                   split_stderr=False):
+    key = session_id + "/" + name
     if key in state["processes"]:
         raise Problem("runtime", "Runtime name already recorded; inspect it before creating a new name")
-    run_id = uuid.uuid4().hex
+    run_id = run_id or uuid.uuid4().hex
     directory = store.directory / "runtime" / run_id
     directory.mkdir(parents=True)
-    spec = {"run_id": run_id, "argv": command, "root": str(store.root)}
+    spec = {"run_id": run_id, "argv": command, "root": str(cwd or store.root)}
+    if timeout:
+        spec["timeout"] = timeout
+    if split_stderr:
+        # A delegated worker: its nested check runners need time to stop their own groups first.
+        spec.update(stderr="stderr.log", grace=10.0)
     spec_path = directory / "spec.json"
     atomic_write(spec_path, canonical(spec) + "\n")
-    record = {"run_id": run_id, "session_id": args.session, "machine": store.machine,
+    record = {"run_id": run_id, "session_id": session_id, "machine": store.machine,
               "root": str(store.root), "directory": directory.relative_to(store.directory).as_posix(),
-              "keep": args.keep}
+              "keep": keep}
     # Persist identity before launch; a crash cannot produce an unrecorded child.
     state["processes"][key] = record
-    store.save(state, "runtime-prepared:" + args.name)
+    store.save(state, "runtime-prepared:" + name)
     SUPERVISORS[run_id] = subprocess.Popen(
         [sys.executable, str(Path(__file__).resolve()), "_supervise", str(spec_path)],
         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **group_kwargs())
@@ -1172,9 +1231,488 @@ def launch_runtime(store, state, args, command):
     while time.monotonic() < deadline:
         status = runtime_view(store, record)
         if status["status"] != "unknown":
-            return {"name": args.name, **status}
+            return {"name": name, **status}
         time.sleep(0.05)
-    return {"name": args.name, **runtime_view(store, record)}
+    return {"name": name, **runtime_view(store, record)}
+
+
+# --- Delegation ledger -------------------------------------------------------
+# One record per delegated task under <state>/delegations/<name>/. It lives outside
+# state.json so schema 2 is unchanged and a 3.0 runtime can still join as a worker.
+RELAY_OPEN, RELAY_CLOSE = "<<<RELAY-RESULT", "RELAY-RESULT>>>"
+RELAY_OPEN_STATES = ("running", "malformed")
+RELAY_OUTCOMES = ("completed", "blocked", "failed")
+PROVIDER_CLIS = ("claude", "codex", "gemini")
+MAX_RELAY_TEXT = 4 * 1024 * 1024
+
+
+def relay_dir(store, name=""):
+    base = store.directory / "delegations"
+    return base / name if name else base
+
+
+def relay_load(store, name):
+    path = relay_dir(store, name) / "record.json"
+    if not path.is_file():
+        raise Problem("delegation", "Unknown delegation name; list them with delegate status")
+    return read_json(path)
+
+
+def relay_save(store, record):
+    atomic_write(relay_dir(store, record["name"]) / "record.json", canonical(record) + "\n")
+
+
+def relay_records(store):
+    base = relay_dir(store)
+    records = []
+    if base.is_dir():
+        for directory in sorted(base.iterdir()):
+            try:
+                records.append(read_json(directory / "record.json"))
+            except (Problem, OSError):
+                continue
+    return records
+
+
+def relay_owned(store, state, args):
+    """The caller's record. A record whose orchestrator has ended is adopted together with its CLI process."""
+    record = relay_load(store, require(args.name, "--name"))
+    owner, adopted = record["session_id"], False
+    if owner != args.session:
+        if state["sessions"].get(owner, {}).get("status") == "active":
+            raise Problem("ownership", f"Delegation {record['name']} belongs to active session {owner}", 3)
+        record["adopted_from"], record["session_id"] = owner, args.session
+        key, process = relay_process(state, record)
+        if process and process["session_id"] != args.session and \
+                state["sessions"].get(process["session_id"], {}).get("status") != "active":
+            new_key = args.session + "/" + key.split("/", 1)[1]
+            if new_key in state["processes"]:
+                raise Problem("runtime", "This session already has a runtime with that name", 3)
+            process["session_id"] = args.session
+            state["processes"][new_key] = state["processes"].pop(key)
+            adopted = True
+    return record, adopted
+
+
+def relay_transfer(store, retired, successor):
+    """Called after the superseding begin was saved; a crash before it leaves adoption as the fallback."""
+    for record in relay_records(store):
+        if record["session_id"] == retired and record["status"] in RELAY_OPEN_STATES:
+            record["session_id"] = successor
+            relay_save(store, record)
+
+
+def relay_process(state, record):
+    for key, process in state["processes"].items():
+        if record.get("run_id") and process["run_id"] == record["run_id"]:
+            return key, process
+    return None, None
+
+
+def relay_runtime(store, state, record):
+    _, process = relay_process(state, record)
+    return runtime_view(store, process) if process else {"status": "unknown", "reason": "No runtime record"}
+
+
+def relay_providers():
+    found = []
+    for name in PROVIDER_CLIS:
+        path = shutil.which(name)
+        item = {"provider": name, "cli": path or "", "version": ""}
+        if path:
+            try:
+                done = subprocess.run([path, "--version"], capture_output=True, text=True, timeout=15,
+                                      stdin=subprocess.DEVNULL)
+                item["version"] = (done.stdout or done.stderr).strip().splitlines()[0][:200] if \
+                    (done.stdout or done.stderr).strip() else ""
+            except (OSError, subprocess.TimeoutExpired):
+                item["version"] = "unknown"
+        found.append(item)
+    return {"cli": found, "note": "Host-native subagents (for example T3 delegate_task) are discovered by the agent, "
+            "not by this runtime"}
+
+
+def relay_start(store, state, args):
+    name = require(args.name, "--name")
+    validate(name, "id")
+    validate(require(args.provider, "--provider"), "id")
+    mode = require(args.mode, "--mode")
+    cli = args.inline is not None or bool(args.argv_file)
+    if relay_dir(store, name).exists():
+        raise Problem("delegation", "Delegation name already used; choose a new name", 3)
+    packet = Path(require(args.packet, "--packet")).expanduser()
+    text = packet.read_text(encoding="utf-8")
+    if not text.strip():
+        raise Problem("arguments", "The packet is empty")
+    workspace = Path(args.workspace).expanduser().resolve() if args.workspace else store.root
+    if not workspace.is_dir():
+        raise Problem("workspace", "The worker workspace does not exist")
+    if mode == "write":
+        worker = require(args.worker_session, "--worker-session")
+        validate(worker, "id")
+        p = phase(state, require(args.phase, "--phase"))
+        if p["state"] == "DONE":
+            raise Problem("transition", f"Phase {p['id']} is DONE; reopen it before delegating", 3)
+        # A host task can start, and its worker begin, before the orchestrator records it.
+        started = state["sessions"].get(worker)
+        if p["owner"] and p["owner"] != worker:
+            raise Problem("ownership", f"Phase {p['id']} is claimed by {p['owner']}; the worker must claim it. "
+                          "Release it first with a transition to TODO", 3)
+        if worker == args.session or started and (cli or not started["parallel"] or
+                                                  started["started_at"] < record_floor(state, args.session)):
+            raise Problem("session_exists", "The worker session ID is already used; choose a new one", 3)
+        if Store(workspace).directory != store.directory:
+            raise Problem("workspace", "A writer's workspace must share this coordinator: this checkout or a "
+                          "linked Git worktree of it", 3)
+    elif args.phase:
+        phase(state, args.phase)
+    if not cli and args.timeout:
+        raise Problem("arguments", "--timeout applies only to a CLI worker command")
+    if args.timeout is not None and not 0 < args.timeout <= 86400:
+        raise Problem("arguments", "Timeout must be greater than 0 and at most 86400 seconds")
+    directory = relay_dir(store, name)
+    command = []
+    if cli:
+        values = {"{packet}": str(directory / "packet.md"), "{packet_text}": text,
+                  "{reply_file}": str(directory / "reply.txt"), "{workspace}": str(workspace),
+                  "{state_dir}": str(store.directory)}
+        for item in command_of(args):
+            for token, value in values.items():
+                item = item.replace(token, value)
+            command.append(item)
+        try:
+            validate(command, "argv")
+        except Problem:
+            raise Problem("arguments", "Worker command is too long; pass {packet} (a path) instead of {packet_text}")
+    directory.mkdir(parents=True)
+    atomic_write(directory / "packet.md", text)
+    record = {"name": name, "session_id": args.session, "machine": store.machine, "provider": args.provider,
+              "model": args.model or "", "mode": mode, "transport": "cli" if cli else "host",
+              "phase": args.phase or "", "worker_session": args.worker_session or "",
+              "workspace": str(workspace) if cli or args.workspace else "", "host_ref": args.host_ref or "",
+              "run_id": uuid.uuid4().hex if cli else "",
+              "packet": (directory / "packet.md").relative_to(store.directory).as_posix(),
+              "packet_sha256": file_digest(directory / "packet.md"), "status": "running",
+              "started_at": now(), "finished_at": ""}
+    if mode == "write" and state["sessions"].get(record["worker_session"]):
+        record["recorded_after_worker_began"] = True
+    if mode == "write" and record["workspace"]:
+        # Changes already present are not the worker's; collect compares against this baseline.
+        baseline = relay_changes(workspace, store.directory)
+        if baseline is not None:
+            atomic_write(directory / "baseline.json", canonical(baseline) + "\n")
+    relay_save(store, record)
+    result = {"name": name, "transport": record["transport"], "packet": str(directory / "packet.md"),
+              "reply_file": str(directory / "reply.txt")}
+    if cli:
+        result["runtime"] = launch_runtime(store, state, args.session, "relay-" + name, command, keep=args.keep,
+                                           cwd=workspace, timeout=args.timeout, run_id=record["run_id"],
+                                           split_stderr=True)
+    return result
+
+
+def record_floor(state, session_id):
+    """A worker that began before its orchestrator did cannot belong to this delegation."""
+    return state["sessions"][session_id]["started_at"]
+
+
+def relay_latest_checks(state, record):
+    latest = {}
+    for check in sorted(state["checks"].values(), key=lambda item: item["sequence"]):
+        if check["phase"] == record["phase"] and check["session_id"] == record["worker_session"]:
+            latest[check["name"]] = check
+    return latest
+
+
+def relay_worker_facts(state, record):
+    latest = {name: c["result"] if c["provenance"] == "executed" else c["result"] + " (" + c["provenance"] + ")"
+              for name, c in relay_latest_checks(state, record).items()}
+    worker = state["sessions"].get(record["worker_session"])
+    try:
+        p = phase(state, record["phase"])
+    except Problem:
+        p = {"state": "missing", "owner": ""}
+    return {"session": worker["status"] + (": " + worker["ended_reason"] if worker["ended_reason"] else "")
+            if worker else "not started", "root": worker["root"] if worker else "", "phase_state": p["state"],
+            "phase_owner": p["owner"], "recorded_checks": latest}
+
+
+def relay_view(store, state, record):
+    view = {key: record[key] for key in ("name", "session_id", "provider", "model", "mode", "transport", "phase",
+                                         "worker_session", "host_ref", "status", "started_at", "finished_at")}
+    if record["transport"] == "cli":
+        runtime = relay_runtime(store, state, record)
+        view["runtime"] = {key: runtime[key] for key in ("status", "exit_code", "timed_out", "reason") if key in runtime}
+        if record["status"] == "running" and runtime["status"] == "exited":
+            view["status"] = "exited"
+    if record["mode"] == "write":
+        view["worker"] = relay_worker_facts(state, record)
+    if record.get("result"):
+        view["result"] = record["result"]
+    for key in ("error", "discrepancies", "reason", "adopted_from", "recorded_after_worker_began"):
+        if record.get(key):
+            view[key] = record[key]
+    return view
+
+
+def relay_final_texts(value):
+    """Final-answer fields of known agent JSON output; tool and progress events are ignored."""
+    if not isinstance(value, dict):
+        return []
+    kind = value.get("type")
+    if kind == "result" and isinstance(value.get("result"), str):  # Claude Code json / stream-json result
+        return [value["result"]]
+    if kind is None and isinstance(value.get("response"), str):  # Gemini CLI json, which has no event type
+        return [value["response"]]
+    item = value.get("item")
+    if value.get("type") == "item.completed" and isinstance(item, dict) and item.get("type") == "agent_message" \
+            and isinstance(item.get("text"), str):  # Codex exec --json
+        return [item["text"]]
+    return []
+
+
+def relay_blocks(text):
+    found, start = [], text.find(RELAY_OPEN)
+    while start >= 0:
+        end = text.find(RELAY_CLOSE, start)
+        if end < 0:
+            break
+        body = text[start + len(RELAY_OPEN):end].strip()
+        if body.startswith("```"):
+            body = body.split("\n", 1)[1] if "\n" in body else ""
+            body = body.rsplit("```", 1)[0]
+        found.append(body.strip())
+        start = text.find(RELAY_OPEN, end)
+    return found
+
+
+def relay_extract(text):
+    """The last RELAY-RESULT block in the final answer: plain text, or a known JSON final-answer field."""
+    stripped = text.strip()
+    if stripped.startswith("{"):
+        try:
+            whole = json.loads(stripped)
+        except ValueError:
+            whole = None
+        if whole is not None:
+            blocks = [b for t in relay_final_texts(whole) for b in relay_blocks(t)]
+            return blocks[-1] if blocks else None
+    candidates, raw, inside = [], [], False
+    for line in text.splitlines():
+        decoded = None
+        if not inside and line.lstrip().startswith("{"):
+            try:
+                decoded = json.loads(line)
+            except ValueError:
+                decoded = None
+        if isinstance(decoded, dict):
+            candidates += relay_blocks("\n".join(raw))
+            raw = []
+            for final in relay_final_texts(decoded):
+                candidates += relay_blocks(final)
+            continue
+        raw.append(line)
+        # Lines inside an open block are its body, even when they look like JSON events.
+        opened = line.rfind(RELAY_OPEN)
+        if opened >= 0:
+            inside = RELAY_CLOSE not in line[opened:]
+        elif inside and RELAY_CLOSE in line:
+            inside = False
+    candidates += relay_blocks("\n".join(raw))
+    return candidates[-1] if candidates else None
+
+
+def relay_problems(record, result):
+    if not isinstance(result, dict):
+        return ["The result must be a JSON object"]
+    problems = []
+    if result.get("outcome") not in RELAY_OUTCOMES:
+        problems.append("outcome must be one of " + ", ".join(RELAY_OUTCOMES))
+    if not isinstance(result.get("summary"), str) or not result["summary"].strip():
+        problems.append("summary is required")
+    if "checks" in result and (not isinstance(result["checks"], list) or not all(
+            isinstance(c, dict) and isinstance(c.get("name"), str) for c in result["checks"])):
+        problems.append("checks must be [{name, result}]")
+    for field in ("changed_files", "findings", "gaps"):
+        if field in result and not isinstance(result[field], list):
+            problems.append(field + " must be a list")
+    if "changed_files" in result and isinstance(result["changed_files"], list) and \
+            not all(isinstance(f, str) for f in result["changed_files"]):
+        problems.append("changed_files must list paths")
+    if result.get("outcome") == "completed":
+        if record["mode"] == "consult" and not isinstance(result.get("answer"), str):
+            problems.append("a consult result needs answer")
+        if record["mode"] == "review":
+            if result.get("verdict") not in ("APPROVE", "CHANGES_REQUIRED"):
+                problems.append("a review needs verdict APPROVE or CHANGES_REQUIRED")
+            if not isinstance(result.get("findings"), list):
+                problems.append("a review needs a findings list")
+        if record["mode"] == "write":
+            for field in ("changed_files", "checks"):
+                if field not in result:
+                    problems.append("a write result needs " + field)
+    return problems
+
+
+def relay_in_scope(name, allowed):
+    """One-directional containment after normalization; traversal and absolute paths are never in scope."""
+    raw = name.replace("\\", "/")
+    if raw.startswith("/") or re.match(r"^[A-Za-z]:", raw) or ".." in raw.split("/"):
+        return False
+    clean = posixpath.normpath(raw).casefold()
+    for scope in allowed:
+        scope = posixpath.normpath(scope.replace("\\", "/")).casefold()
+        if scope in ("*", ".") or clean == scope or clean.startswith(scope + "/"):
+            return True
+    return False
+
+
+def relay_changes(root, state_dir):
+    """Changed and untracked paths of a workspace with content facts, or None when they cannot be read."""
+    try:
+        snap = snapshot(root, state_dir)
+        if snap.get("limited"):
+            return None
+        names = [c["path"] if isinstance(c, dict) else c for c in snap["changes"]]
+        return file_facts(root, names, state_prefix(root, state_dir))
+    except Problem:
+        return None
+
+
+def relay_discrepancies(store, state, record, result):
+    """Compare a writer's claims with what the runtime recorded and the workspace shows; claims prove nothing."""
+    facts = relay_worker_facts(state, record)
+    found = []
+    if result.get("worker_session", record["worker_session"]) != record["worker_session"]:
+        found.append("Result names another worker session")
+    if facts["session"] == "not started":
+        found.append("The worker session never began in this coordinator")
+    latest = relay_latest_checks(state, record)
+    for check in result.get("checks") or []:
+        recorded = latest.get(check["name"])
+        if check.get("result") == "pass" and (not recorded or recorded["result"] != "pass"):
+            found.append(f"Check {check['name']} is claimed to pass but the worker recorded "
+                         f"{recorded['result'] if recorded else 'no run'}")
+    try:
+        p = phase(state, record["phase"])
+    except Problem:
+        p = {"id": "", "paths": [], "required_checks": []}
+    root = Path(facts["root"]) if facts["root"] else None
+    if result.get("outcome") == "completed":
+        overall = {}
+        for c in sorted((c for c in state["checks"].values() if c["phase"] == p["id"]), key=lambda c: c["sequence"]):
+            overall[c["name"]] = c
+        for name in p["required_checks"]:
+            if name not in latest or overall[name]["id"] != latest[name]["id"]:
+                found.append(f"Required check {name} has no latest run by the worker")
+        if root and root.is_dir() and p["id"]:
+            # The same gate DONE uses, judged in the worker's workspace: fresh fingerprint and intact log.
+            found += ["Worker evidence would not satisfy DONE: " + gap
+                      for gap in verification_gaps(Store(root, store.directory), state, p)]
+    claimed = [f for f in result.get("changed_files") or []]
+    outside = [f for f in claimed if not relay_in_scope(f, p["paths"])]
+    if outside:
+        found.append("Reported files outside the phase paths: " + ", ".join(outside[:10]))
+    if root and root.is_dir():
+        now = relay_changes(root, store.directory)
+        baseline_path = relay_dir(store, record["name"]) / "baseline.json"
+        baseline = read_json(baseline_path) if baseline_path.is_file() and str(root) == record["workspace"] else None
+        if now is None:
+            found.append("Could not inspect the worker workspace")
+        elif baseline is None and root == store.root:
+            found.append("The worker used the orchestrator checkout without a recorded baseline; its changes "
+                         "could not be told apart from others")
+        else:
+            base = baseline or {}
+            observed = sorted(f for f in set(now) | set(base) if now.get(f) != base.get(f))
+            stray = [f for f in observed if not relay_in_scope(f, p["paths"])]
+            if stray:
+                found.append("Workspace changes outside the phase paths: " + ", ".join(stray[:10]))
+            unreported = [f for f in observed if f not in claimed and f not in stray]
+            if unreported:
+                found.append("Changed but not reported: " + ", ".join(unreported[:10]))
+    return found
+
+
+def relay_collect(store, state, args):
+    record, adopted = relay_owned(store, state, args)
+    if record["status"] not in RELAY_OPEN_STATES:
+        raise Problem("delegation", f"Delegation {record['name']} is already {record['status']}", 3)
+    directory = relay_dir(store, record["name"])
+    sources = [directory / "reply.txt"]
+    if record["transport"] == "cli":
+        runtime = relay_runtime(store, state, record)
+        if runtime["status"] == "running":
+            raise Problem("delegation_running", "The worker is still running; wait for it or cancel it", 3)
+        if runtime["status"] != "exited" and not args.confirm_stopped:
+            raise Problem("delegation_unknown", f"Worker runtime is {runtime['status']}: "
+                          f"{runtime.get('reason', '')}. Confirm the worker stopped, then pass --confirm-stopped", 3)
+        _, process = relay_process(state, record)
+        if process:
+            sources.append(relay_path(store, process["directory"]) / "output.log")
+    if args.from_file:
+        sources = [Path(args.from_file).expanduser()]
+    body, used = None, ""
+    for source in sources:
+        if source.is_file():
+            with open(source, "rb") as handle:
+                handle.seek(max(0, source.stat().st_size - MAX_RELAY_TEXT))
+                body = relay_extract(handle.read().decode("utf-8", "replace"))
+            if body is not None:
+                used = str(source)
+                break
+    if body is None:
+        record.update(status="malformed", error="No " + RELAY_OPEN + " ... " + RELAY_CLOSE + " block in the final answer")
+        relay_save(store, record)
+        return relay_view(store, state, record), adopted
+    try:
+        result = json.loads(body, object_pairs_hook=object_pairs)
+        problems = relay_problems(record, result)
+    except (ValueError, Problem) as exc:
+        result, problems = None, ["The block is not valid, unambiguous JSON: " + str(exc)[:200]]
+    if problems:
+        record.update(status="malformed", error="; ".join(problems))
+        relay_save(store, record)
+        return relay_view(store, state, record), adopted
+    discrepancies = relay_discrepancies(store, state, record, result) if record["mode"] == "write" else []
+    atomic_write(directory / "result.json", canonical(result) + "\n")
+    record.update(status="returned", finished_at=now(), result=result, source=used,
+                  result_sha256=file_digest(directory / "result.json"), error="", discrepancies=discrepancies)
+    relay_save(store, record)
+    return relay_view(store, state, record), adopted
+
+
+def relay_cancel(store, state, args):
+    record, adopted = relay_owned(store, state, args)
+    if record["status"] not in RELAY_OPEN_STATES:
+        raise Problem("delegation", f"Delegation {record['name']} is already {record['status']}", 3)
+    if record["transport"] == "cli":
+        _, process = relay_process(state, record)
+        stopped = stop_runtime(store, process) if process else {"status": "unknown", "reason": "No runtime record"}
+        if stopped["status"] == "running":
+            raise Problem("delegation_running", "The worker did not stop; inspect it before retrying", 3)
+        if stopped["status"] != "exited" and not args.confirm_stopped:
+            raise Problem("delegation_unknown", f"Worker runtime is {stopped['status']}: {stopped.get('reason', '')}. "
+                          "Stop it yourself, then pass --confirm-stopped", 3)
+    elif not args.confirm_stopped:
+        raise Problem("arguments", "Cancel the host task first (for example with the host's cancel tool), then "
+                      "pass --confirm-stopped")
+    record.update(status="cancelled", finished_at=now(), reason=args.reason or "cancelled by orchestrator")
+    relay_save(store, record)
+    view = relay_view(store, state, record)
+    if record["mode"] == "write" and state["sessions"].get(record["worker_session"], {}).get("status") == "active":
+        view["next"] = (f"Worker session {record['worker_session']} is still active; release it with release "
+                        "--confirm-stopped once you have confirmed its agent stopped")
+    return view, adopted
+
+
+def relay_path(store, relative):
+    return relative_path(store.directory, relative)
+
+
+def relay_open(store, session_id=None):
+    return [r for r in relay_records(store) if r["status"] in RELAY_OPEN_STATES and
+            (session_id is None or r["session_id"] == session_id)]
 
 
 def running_checks(state, session_id, pid=None):
@@ -1258,6 +1796,26 @@ def command_parser():
     p.add_argument("--name", required=True)
     p.add_argument("--argv-file", help="JSON argv array instead of a command after --")
     p.add_argument("--keep", action="store_true")
+    p = sub.add_parser("delegate", help="Record and supervise work delegated to another agent; worker command after --")
+    p.add_argument("action", choices=("providers", "start", "status", "collect", "cancel"))
+    p.add_argument("--session")
+    p.add_argument("--expect-revision", type=int)
+    p.add_argument("--name", help="Unique delegation ID")
+    p.add_argument("--provider", help="Worker provider ID, for example codex, claude or gemini")
+    p.add_argument("--model", default="")
+    p.add_argument("--mode", choices=("consult", "review", "write"))
+    p.add_argument("--phase", help="Required for write: the phase the worker claims")
+    p.add_argument("--worker-session", help="Required for write: the new session ID the worker begins")
+    p.add_argument("--workspace", help="Worker checkout; a writer needs this checkout or a linked worktree")
+    p.add_argument("--packet", help="Instruction packet file given to the worker")
+    p.add_argument("--host-ref", help="Host task reference when no CLI command is given")
+    p.add_argument("--argv-file", help="JSON argv array instead of a command after --")
+    p.add_argument("--timeout", type=float, help="CLI worker: stop its process group after this many seconds")
+    p.add_argument("--keep", action="store_true", help="CLI worker: keep running when this session ends")
+    p.add_argument("--from", dest="from_file", help="collect: file holding the worker's final reply")
+    p.add_argument("--confirm-stopped", action="store_true",
+                   help="cancel/collect: you verified the worker stopped (host task, or a CLI worker in unknown state)")
+    p.add_argument("--reason", default="")
     return parser
 
 
@@ -1440,7 +1998,21 @@ def end(store, state, args):
     for name, record in state["processes"].items():
         if record["session_id"] == args.session:
             processes[name] = runtime_view(store, record) if args.keep_runtimes or record["keep"] else stop_runtime(store, record)
-    return {"session_id": args.session, "processes": processes}
+    result = {"session_id": args.session, "processes": processes}
+    still_open = []
+    for record in relay_open(store, args.session):
+        key, _ = relay_process(state, record)
+        stopped = processes.get(key)
+        if record["transport"] == "cli" and stopped and stopped["status"] == "exited" and record["status"] == "running":
+            record.update(status="cancelled", finished_at=now(), reason="orchestrator session ended")
+            relay_save(store, record)
+        else:
+            still_open.append(record["name"])
+    if still_open:
+        result["open_delegations"] = still_open
+        result["warning"] = ("Delegations stay open: a later session adopts them with delegate status, collect "
+                             "or cancel. Cancel host tasks you no longer need.")
+    return result
 
 
 def check_command(store, state, args):
@@ -1489,9 +2061,14 @@ def mutate(store, state, args):
         return {"checkpoint": state["sessions"][args.session]["checkpoint"]["id"]}, "checkpoint:" + args.session
     if command == "end":
         return end(store, state, args), None
+    if command == "delegate":
+        if args.action == "start":
+            return relay_start(store, state, args), None
+        result, adopted = (relay_collect if args.action == "collect" else relay_cancel)(store, state, args)
+        return result, "delegate-adopt:" + args.session if adopted else None
     if command == "runtime":
         if args.action == "launch":
-            return launch_runtime(store, state, args, command_of(args)), None
+            return launch_runtime(store, state, args.session, args.name, command_of(args), args.keep), None
         record = state["processes"].get(args.session + "/" + args.name)
         if not record:
             raise Problem("runtime", "No runtime with this name belongs to this session")
@@ -1556,6 +2133,10 @@ def read_only(store, args):
             "complete" if state["phases"] and all(p["state"] == "DONE" for p in state["phases"]) else "decision"
         return state, {"action": action, "phase": choices[0] if choices else None, "stale_done_evidence": stale,
                        "not_done": [p["id"] for p in state["phases"] if p["state"] != "DONE"]}
+    if args.command == "delegate":
+        records = [relay_load(store, args.name)] if args.name else relay_records(store)
+        return state, {"delegations": [relay_view(store, state, r) for r in records
+                                       if args.name or not args.session or r["session_id"] == args.session]}
     record = state["processes"].get(args.session + "/" + args.name)
     if not record:
         raise Problem("runtime", "Unknown session runtime")
@@ -1564,13 +2145,18 @@ def read_only(store, args):
 
 def dispatch(store, args):
     command = args.command
-    accepts_command = command == "check" and args.action == "run" or command == "runtime" and args.action == "launch"
+    accepts_command = command == "check" and args.action == "run" or command == "runtime" and args.action == "launch" \
+        or command == "delegate" and args.action == "start"
     if args.inline is not None and not accepts_command:
-        raise Problem("arguments", "Only 'check run' and 'runtime launch' accept a command after --")
+        raise Problem("arguments", "Only 'check run', 'runtime launch' and 'delegate start' accept a command after --")
+    if command == "delegate" and args.action == "providers":
+        return None, relay_providers()
+    if command == "delegate" and args.action != "status":
+        require(args.session, "--session")
     if command == "snapshot":
         result = store.observe()
         return None, result if args.full else compact_snapshot(result)
-    if command in ("status", "next") or command == "runtime" and args.action == "status":
+    if command in ("status", "next") or command in ("runtime", "delegate") and args.action == "status":
         return read_only(store, args)
     if command == "check" and args.action == "run":
         return recorded_check(store, args)

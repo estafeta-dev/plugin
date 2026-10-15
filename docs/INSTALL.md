@@ -42,8 +42,9 @@ language.
    same command once. Never edit host permissions or settings to get past the
    block. If it is blocked again, report the command for the user to run.
 6. **Verify.**
-   - `status` prints five MATCH lines per destination: session-start,
-     plan-and-orchestrate, session-handover, session-end and session-guide.
+   - `status` prints six MATCH lines per destination: session-start,
+     plan-and-orchestrate, session-handover, session-end, session-guide and
+     agent-relay.
    - There is no RETIRED-PRESENT line.
    - No other copy shadows these skills.
 7. **Finish.** Reload skills if that is possible without ending the chat. Do
@@ -57,7 +58,7 @@ language.
 
 ## Portable skills: any supported provider
 
-This route installs five standalone skills with the same runtime and instructions.
+This route installs six standalone skills with the same runtime and instructions.
 It also works from an extracted full source ZIP.
 
 ```sh
@@ -88,7 +89,7 @@ python3 scripts/workflow.py install --dest /path/to/custom/profile/skills
 | `agents` | `~/.agents/skills` |
 
 The installer respects configured provider homes and detects existing Claude
-and Hermes profiles. It changes only these five skills. A changed directory is
+and Hermes profiles. It changes only these six skills. A changed directory is
 backed up intact outside the discovery root before its replacement. Updates are
 atomic per skill; rerunning the installer converges after a partial failure.
 `status` compares complete directory hashes. Reload skills or start a new host
@@ -130,7 +131,7 @@ codex plugin list --marketplace pashbel-estafeta --json
 If Git access is configured differently for the host, add the authenticated local
 clone with `codex plugin marketplace add .` instead. Open the desktop plugin
 browser to install from that marketplace when the installed client uses the UI
-for installation. Start a new session and verify the five skills are available.
+for installation. Start a new session and verify the six skills are available.
 See [OpenAI packaging documentation](https://developers.openai.com/plugins/build/plugins).
 
 ## Claude Code plugin

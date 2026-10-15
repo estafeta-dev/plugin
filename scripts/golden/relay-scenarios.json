@@ -1,0 +1,1743 @@
+{
+ "description": "Golden paths for agent-relay. Each scenario is a sequence of orchestrator and worker interactions with the expected result of every step; one failed step fails the scenario. The stub worker stands in for an LLM; steps marked verify also run against a live provider run with --live-verify.",
+ "scenarios": [
+  {
+   "id": "consult-cli",
+   "description": "Orchestrator asks another provider a read-only question through a supervised CLI worker.",
+   "steps": [
+    {
+     "name": "orchestrator begins",
+     "do": "runtime",
+     "args": [
+      "begin",
+      "--session",
+      "orch"
+     ],
+     "expect": [
+      {
+       "path": "ok",
+       "equals": true
+      },
+      {
+       "path": "result.session_id",
+       "equals": "orch"
+      }
+     ]
+    },
+    {
+     "name": "providers are listed without state changes",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "providers"
+     ],
+     "expect": [
+      {
+       "path": "ok",
+       "equals": true
+      },
+      {
+       "path": "result.cli",
+       "nonempty": true
+      }
+     ]
+    },
+    {
+     "name": "packet is written",
+     "do": "packet",
+     "file": "consult.md",
+     "header": {
+      "mode": "consult",
+      "name": "ask-1",
+      "orchestrator": "orch",
+      "workspace": "{root}"
+     },
+     "body": "Question: which file holds the greeting?"
+    },
+    {
+     "name": "consult starts as a supervised CLI worker",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "start",
+      "--session",
+      "orch",
+      "--name",
+      "ask-1",
+      "--provider",
+      "stub",
+      "--model",
+      "stub-1",
+      "--mode",
+      "consult",
+      "--packet",
+      "{packets}/consult.md",
+      "--timeout",
+      "60",
+      "--",
+      "{python}",
+      "{stub}",
+      "{packet}",
+      "--answer",
+      "a.txt"
+     ],
+     "expect": [
+      {
+       "path": "ok",
+       "equals": true
+      },
+      {
+       "path": "result.transport",
+       "equals": "cli"
+      }
+     ]
+    },
+    {
+     "name": "worker exits on its own",
+     "do": "wait",
+     "delegation": "ask-1",
+     "expect": [
+      {
+       "path": "status",
+       "equals": "exited"
+      },
+      {
+       "path": "runtime.exit_code",
+       "equals": 0
+      }
+     ]
+    },
+    {
+     "name": "status shows the delegation as open before collect",
+     "do": "runtime",
+     "args": [
+      "status",
+      "--session",
+      "orch"
+     ],
+     "expect": [
+      {
+       "path": "result.open_delegations.0.name",
+       "equals": "ask-1"
+      }
+     ]
+    },
+    {
+     "name": "collect parses the reply from the worker log",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "collect",
+      "--session",
+      "orch",
+      "--name",
+      "ask-1"
+     ],
+     "expect": [
+      {
+       "path": "result.status",
+       "equals": "returned"
+      },
+      {
+       "path": "result.result.answer",
+       "equals": "a.txt"
+      },
+      {
+       "path": "result.model",
+       "equals": "stub-1"
+      }
+     ]
+    },
+    {
+     "name": "recorded delegation meets the golden expectations",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "status",
+      "--name",
+      "ask-1"
+     ],
+     "verify": true,
+     "expect": [
+      {
+       "path": "result.delegations.0.status",
+       "equals": "returned"
+      },
+      {
+       "path": "result.delegations.0.result.outcome",
+       "equals": "completed"
+      },
+      {
+       "path": "result.delegations.0.result.answer",
+       "nonempty": true
+      }
+     ]
+    },
+    {
+     "name": "a second collect is refused",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "collect",
+      "--session",
+      "orch",
+      "--name",
+      "ask-1"
+     ],
+     "expect": [
+      {
+       "path": "ok",
+       "equals": false
+      },
+      {
+       "path": "error.code",
+       "equals": "delegation"
+      }
+     ]
+    },
+    {
+     "name": "orchestrator ends with nothing open",
+     "do": "runtime",
+     "args": [
+      "end",
+      "--session",
+      "orch",
+      "--expect-revision",
+      "{rev}",
+      "--next-action",
+      "done"
+     ],
+     "expect": [
+      {
+       "path": "ok",
+       "equals": true
+      },
+      {
+       "path": "result.open_delegations",
+       "absent": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "review-host",
+   "description": "Cross-review through a host-native child task (for example T3 delegate_task); the host returns text that the orchestrator saves and collects.",
+   "steps": [
+    {
+     "name": "orchestrator begins",
+     "do": "runtime",
+     "args": [
+      "begin",
+      "--session",
+      "orch"
+     ],
+     "expect": [
+      {
+       "path": "ok",
+       "equals": true
+      }
+     ]
+    },
+    {
+     "name": "review packet is written",
+     "do": "packet",
+     "file": "review.md",
+     "header": {
+      "mode": "review",
+      "name": "review-1",
+      "orchestrator": "orch",
+      "workspace": "{root}",
+      "revision": "HEAD"
+     },
+     "body": "Review the diff of HEAD for correctness."
+    },
+    {
+     "name": "host task is recorded without a process",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "start",
+      "--session",
+      "orch",
+      "--name",
+      "review-1",
+      "--provider",
+      "codex",
+      "--model",
+      "gpt-test",
+      "--mode",
+      "review",
+      "--packet",
+      "{packets}/review.md",
+      "--host-ref",
+      "t3:task-42"
+     ],
+     "expect": [
+      {
+       "path": "result.transport",
+       "equals": "host"
+      },
+      {
+       "path": "result.runtime",
+       "absent": true
+      }
+     ]
+    },
+    {
+     "name": "status lists it as running",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "status",
+      "--session",
+      "orch"
+     ],
+     "expect": [
+      {
+       "path": "result.delegations.0.status",
+       "equals": "running"
+      },
+      {
+       "path": "result.delegations.0.host_ref",
+       "equals": "t3:task-42"
+      }
+     ]
+    },
+    {
+     "name": "collect without a reply leaves it open as malformed",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "collect",
+      "--session",
+      "orch",
+      "--name",
+      "review-1"
+     ],
+     "expect": [
+      {
+       "path": "result.status",
+       "equals": "malformed"
+      }
+     ]
+    },
+    {
+     "name": "host reply arrives wrapped in JSON output",
+     "do": "reply",
+     "file": "review-reply.json",
+     "json_wrap": true,
+     "result": {
+      "outcome": "completed",
+      "summary": "One issue",
+      "verdict": "CHANGES_REQUIRED",
+      "findings": [
+       {
+        "location": "a.txt:1",
+        "scenario": "empty input",
+        "impact": "crash"
+       }
+      ]
+     }
+    },
+    {
+     "name": "collect from the saved reply",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "collect",
+      "--session",
+      "orch",
+      "--name",
+      "review-1",
+      "--from",
+      "{packets}/review-reply.json"
+     ],
+     "expect": [
+      {
+       "path": "result.status",
+       "equals": "returned"
+      },
+      {
+       "path": "result.result.verdict",
+       "in": [
+        "APPROVE",
+        "CHANGES_REQUIRED"
+       ]
+      },
+      {
+       "path": "result.result.findings",
+       "nonempty": true
+      }
+     ]
+    },
+    {
+     "name": "recorded delegation meets the golden expectations",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "status",
+      "--name",
+      "review-1"
+     ],
+     "verify": true,
+     "expect": [
+      {
+       "path": "result.delegations.0.status",
+       "equals": "returned"
+      },
+      {
+       "path": "result.delegations.0.result.verdict",
+       "in": [
+        "APPROVE",
+        "CHANGES_REQUIRED"
+       ]
+      },
+      {
+       "path": "result.delegations.0.result.findings",
+       "exists": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "write-worktree",
+   "description": "A worker of another provider implements one phase in a linked worktree; the orchestrator verifies its claims against recorded facts, integrates and closes the phase with fresh checks.",
+   "steps": [
+    {
+     "name": "orchestrator begins",
+     "do": "runtime",
+     "args": [
+      "begin",
+      "--session",
+      "orch"
+     ],
+     "expect": [
+      {
+       "path": "ok",
+       "equals": true
+      }
+     ]
+    },
+    {
+     "name": "plan records the phase",
+     "do": "runtime",
+     "args": [
+      "plan",
+      "--session",
+      "orch",
+      "--expect-revision",
+      "{rev}",
+      "--input",
+      "{packets}/plan.json"
+     ],
+     "files": {
+      "plan.json": {
+       "phases": [
+        {
+         "id": "P1",
+         "title": "Greeting",
+         "acceptance": "greeting.txt says hello",
+         "paths": [
+          "greeting.txt"
+         ],
+         "required_checks": [
+          "unit"
+         ]
+        }
+       ]
+      }
+     },
+     "expect": [
+      {
+       "path": "ok",
+       "equals": true
+      }
+     ]
+    },
+    {
+     "name": "orchestrator claims P1 by mistake",
+     "do": "runtime",
+     "args": [
+      "transition",
+      "--session",
+      "orch",
+      "--expect-revision",
+      "{rev}",
+      "--phase",
+      "P1",
+      "--to",
+      "IN_PROGRESS"
+     ],
+     "expect": [
+      {
+       "path": "result.owner",
+       "equals": "orch"
+      }
+     ]
+    },
+    {
+     "name": "worktree for the worker",
+     "do": "git",
+     "args": [
+      "worktree",
+      "add",
+      "-q",
+      "-b",
+      "relay/P1",
+      "{wt}"
+     ]
+    },
+    {
+     "name": "write packet is written",
+     "do": "packet",
+     "file": "write.md",
+     "header": {
+      "mode": "write",
+      "name": "write-1",
+      "orchestrator": "orch",
+      "phase": "P1",
+      "worker_session": "worker-1",
+      "workspace": "{wt}",
+      "allowed_paths": [
+       "greeting.txt"
+      ],
+      "required_checks": {
+       "unit": [
+        "{python}",
+        "-c",
+        "import sys; sys.exit(open('greeting.txt').read().strip() != 'hello')"
+       ]
+      }
+     },
+     "body": "Create greeting.txt containing hello."
+    },
+    {
+     "name": "delegating a phase the orchestrator still holds is refused",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "start",
+      "--session",
+      "orch",
+      "--name",
+      "write-1",
+      "--provider",
+      "stub",
+      "--mode",
+      "write",
+      "--phase",
+      "P1",
+      "--worker-session",
+      "worker-1",
+      "--workspace",
+      "{wt}",
+      "--packet",
+      "{packets}/write.md",
+      "--",
+      "{python}",
+      "{stub}",
+      "{packet}"
+     ],
+     "expect": [
+      {
+       "path": "ok",
+       "equals": false
+      },
+      {
+       "path": "error.code",
+       "equals": "ownership"
+      }
+     ]
+    },
+    {
+     "name": "orchestrator releases P1",
+     "do": "runtime",
+     "args": [
+      "transition",
+      "--session",
+      "orch",
+      "--expect-revision",
+      "{rev}",
+      "--phase",
+      "P1",
+      "--to",
+      "BLOCKED",
+      "--reason",
+      "delegated"
+     ],
+     "expect": [
+      {
+       "path": "result.owner",
+       "equals": ""
+      }
+     ]
+    },
+    {
+     "name": "P1 returns to TODO unclaimed",
+     "do": "runtime",
+     "args": [
+      "transition",
+      "--session",
+      "orch",
+      "--expect-revision",
+      "{rev}",
+      "--phase",
+      "P1",
+      "--to",
+      "TODO",
+      "--reason",
+      "delegated"
+     ],
+     "expect": [
+      {
+       "path": "result.state",
+       "equals": "TODO"
+      }
+     ]
+    },
+    {
+     "name": "write worker starts in the worktree",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "start",
+      "--session",
+      "orch",
+      "--expect-revision",
+      "{rev}",
+      "--name",
+      "write-1",
+      "--provider",
+      "stub",
+      "--mode",
+      "write",
+      "--phase",
+      "P1",
+      "--worker-session",
+      "worker-1",
+      "--workspace",
+      "{wt}",
+      "--packet",
+      "{packets}/write.md",
+      "--timeout",
+      "120",
+      "--",
+      "{python}",
+      "{stub}",
+      "{packet}",
+      "--edit",
+      "greeting.txt=hello"
+     ],
+     "expect": [
+      {
+       "path": "ok",
+       "equals": true
+      },
+      {
+       "path": "result.runtime.name",
+       "equals": "relay-write-1"
+      }
+     ]
+    },
+    {
+     "name": "worker exits",
+     "do": "wait",
+     "delegation": "write-1",
+     "expect": [
+      {
+       "path": "status",
+       "equals": "exited"
+      },
+      {
+       "path": "runtime.exit_code",
+       "equals": 0
+      }
+     ]
+    },
+    {
+     "name": "collect matches claims with recorded facts",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "collect",
+      "--session",
+      "orch",
+      "--name",
+      "write-1"
+     ],
+     "expect": [
+      {
+       "path": "result.status",
+       "equals": "returned"
+      },
+      {
+       "path": "result.discrepancies",
+       "empty": true
+      },
+      {
+       "path": "result.worker.session",
+       "contains": "ended"
+      },
+      {
+       "path": "result.worker.phase_state",
+       "equals": "VERIFY"
+      },
+      {
+       "path": "result.worker.phase_owner",
+       "equals": ""
+      },
+      {
+       "path": "result.worker.recorded_checks.unit",
+       "equals": "pass"
+      },
+      {
+       "path": "result.worker.root",
+       "contains": "worker wt"
+      }
+     ]
+    },
+    {
+     "name": "integrator stages the worker's change",
+     "do": "git",
+     "cwd": "wt",
+     "args": [
+      "add",
+      "greeting.txt"
+     ]
+    },
+    {
+     "name": "integrator reviews and commits the worker's change on its branch",
+     "do": "git",
+     "cwd": "wt",
+     "args": [
+      "-c",
+      "user.name=Integrator",
+      "-c",
+      "user.email=integrator@example.invalid",
+      "-c",
+      "commit.gpgsign=false",
+      "commit",
+      "-qam",
+      "P1 by worker-1",
+      "--allow-empty"
+     ]
+    },
+    {
+     "name": "integrator merges the worker branch",
+     "do": "git",
+     "args": [
+      "merge",
+      "-q",
+      "--ff-only",
+      "relay/P1"
+     ]
+    },
+    {
+     "name": "orchestrator claims P1 for verification",
+     "do": "runtime",
+     "args": [
+      "transition",
+      "--session",
+      "orch",
+      "--expect-revision",
+      "{rev}",
+      "--phase",
+      "P1",
+      "--to",
+      "VERIFY"
+     ],
+     "expect": [
+      {
+       "path": "result.owner",
+       "equals": "orch"
+      }
+     ]
+    },
+    {
+     "name": "fresh check in the integrated checkout",
+     "do": "runtime",
+     "args": [
+      "check",
+      "run",
+      "--session",
+      "orch",
+      "--expect-revision",
+      "{rev}",
+      "--phase",
+      "P1",
+      "--name",
+      "unit",
+      "--",
+      "{python}",
+      "-c",
+      "import sys; sys.exit(open('greeting.txt').read().strip() != 'hello')"
+     ],
+     "expect": [
+      {
+       "path": "result.result",
+       "equals": "pass"
+      }
+     ]
+    },
+    {
+     "name": "P1 is accepted",
+     "do": "runtime",
+     "args": [
+      "transition",
+      "--session",
+      "orch",
+      "--expect-revision",
+      "{rev}",
+      "--phase",
+      "P1",
+      "--to",
+      "DONE",
+      "--acceptance-note",
+      "greeting.txt says hello after integration"
+     ],
+     "expect": [
+      {
+       "path": "result.state",
+       "equals": "DONE"
+      }
+     ]
+    },
+    {
+     "name": "orchestrator ends cleanly",
+     "do": "runtime",
+     "args": [
+      "end",
+      "--session",
+      "orch",
+      "--expect-revision",
+      "{rev}",
+      "--next-action",
+      "done"
+     ],
+     "expect": [
+      {
+       "path": "result.open_delegations",
+       "absent": true
+      }
+     ]
+    },
+    {
+     "name": "recorded delegation meets the golden expectations",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "status",
+      "--name",
+      "write-1"
+     ],
+     "verify": true,
+     "expect": [
+      {
+       "path": "result.delegations.0.status",
+       "equals": "returned"
+      },
+      {
+       "path": "result.delegations.0.result.outcome",
+       "equals": "completed"
+      },
+      {
+       "path": "result.delegations.0.discrepancies",
+       "absent": true
+      },
+      {
+       "path": "result.delegations.0.worker.session",
+       "contains": "ended"
+      },
+      {
+       "path": "result.delegations.0.worker.recorded_checks",
+       "nonempty": true
+      }
+     ]
+    },
+    {
+     "name": "the phase is accepted after integration",
+     "do": "runtime",
+     "args": [
+      "status"
+     ],
+     "verify": true,
+     "expect": [
+      {
+       "path": "result.phases.0.id",
+       "equals": "P1"
+      },
+      {
+       "path": "result.phases.0.state",
+       "equals": "DONE"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "write-host-fast-worker",
+   "description": "A host-native writer (observed live with Codex through T3) begins and claims its phase before the orchestrator records the task; the late record is accepted, while an unrelated session reusing the ID is not.",
+   "steps": [
+    {
+     "name": "orchestrator begins",
+     "do": "runtime",
+     "args": [
+      "begin",
+      "--session",
+      "orch"
+     ]
+    },
+    {
+     "name": "plan records the phase",
+     "do": "runtime",
+     "args": [
+      "plan",
+      "--session",
+      "orch",
+      "--expect-revision",
+      "{rev}",
+      "--input",
+      "{packets}/plan.json"
+     ],
+     "files": {
+      "plan.json": {
+       "phases": [
+        {
+         "id": "P1",
+         "title": "Greeting",
+         "acceptance": "greeting.txt says hello",
+         "paths": [
+          "greeting.txt"
+         ],
+         "required_checks": [
+          "unit"
+         ]
+        }
+       ]
+      }
+     }
+    },
+    {
+     "name": "worktree for the worker",
+     "do": "git",
+     "args": [
+      "worktree",
+      "add",
+      "-q",
+      "-b",
+      "relay/P1",
+      "{wt}"
+     ]
+    },
+    {
+     "name": "write packet",
+     "do": "packet",
+     "file": "write.md",
+     "header": {
+      "mode": "write",
+      "name": "fast-1",
+      "orchestrator": "orch",
+      "phase": "P1",
+      "worker_session": "worker-fast",
+      "workspace": "{wt}",
+      "allowed_paths": [
+       "greeting.txt"
+      ],
+      "required_checks": {
+       "unit": [
+        "{python}",
+        "-c",
+        "pass"
+       ]
+      }
+     },
+     "body": "Create greeting.txt."
+    },
+    {
+     "name": "the host worker begins first",
+     "do": "runtime",
+     "root": "wt",
+     "args": [
+      "begin",
+      "--parallel",
+      "--session",
+      "worker-fast"
+     ],
+     "expect": [
+      {
+       "path": "ok",
+       "equals": true
+      }
+     ]
+    },
+    {
+     "name": "and claims the phase",
+     "do": "runtime",
+     "root": "wt",
+     "args": [
+      "transition",
+      "--session",
+      "worker-fast",
+      "--expect-revision",
+      "{rev}",
+      "--phase",
+      "P1",
+      "--to",
+      "IN_PROGRESS"
+     ],
+     "expect": [
+      {
+       "path": "result.owner",
+       "equals": "worker-fast"
+      }
+     ]
+    },
+    {
+     "name": "the orchestrator records the task afterwards",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "start",
+      "--session",
+      "orch",
+      "--name",
+      "fast-1",
+      "--provider",
+      "codex",
+      "--mode",
+      "write",
+      "--phase",
+      "P1",
+      "--worker-session",
+      "worker-fast",
+      "--workspace",
+      "{wt}",
+      "--packet",
+      "{packets}/write.md",
+      "--host-ref",
+      "t3:fast-1"
+     ],
+     "expect": [
+      {
+       "path": "ok",
+       "equals": true
+      }
+     ]
+    },
+    {
+     "name": "status links the running worker",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "status",
+      "--name",
+      "fast-1"
+     ],
+     "expect": [
+      {
+       "path": "result.delegations.0.worker.session",
+       "equals": "active"
+      },
+      {
+       "path": "result.delegations.0.worker.phase_owner",
+       "equals": "worker-fast"
+      }
+     ]
+    },
+    {
+     "name": "a CLI delegation cannot reuse a live session ID",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "start",
+      "--session",
+      "orch",
+      "--name",
+      "fast-2",
+      "--provider",
+      "stub",
+      "--mode",
+      "write",
+      "--phase",
+      "P1",
+      "--worker-session",
+      "worker-fast",
+      "--workspace",
+      "{wt}",
+      "--packet",
+      "{packets}/write.md",
+      "--",
+      "{python}",
+      "{stub}",
+      "{packet}"
+     ],
+     "expect": [
+      {
+       "path": "ok",
+       "equals": false
+      },
+      {
+       "path": "error.code",
+       "equals": "session_exists"
+      }
+     ]
+    },
+    {
+     "name": "another worker cannot take the claimed phase",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "start",
+      "--session",
+      "orch",
+      "--name",
+      "fast-3",
+      "--provider",
+      "codex",
+      "--mode",
+      "write",
+      "--phase",
+      "P1",
+      "--worker-session",
+      "worker-other",
+      "--packet",
+      "{packets}/write.md",
+      "--host-ref",
+      "t3:x"
+     ],
+     "expect": [
+      {
+       "path": "ok",
+       "equals": false
+      },
+      {
+       "path": "error.code",
+       "equals": "ownership"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "failures",
+   "description": "The orchestrator catches a hung worker, a garbled reply, a writer that claims checks it never ran, and survives its own session ending with work still open.",
+   "steps": [
+    {
+     "name": "orchestrator begins",
+     "do": "runtime",
+     "args": [
+      "begin",
+      "--session",
+      "orch"
+     ]
+    },
+    {
+     "name": "plan records the phase",
+     "do": "runtime",
+     "args": [
+      "plan",
+      "--session",
+      "orch",
+      "--expect-revision",
+      "{rev}",
+      "--input",
+      "{packets}/plan.json"
+     ],
+     "files": {
+      "plan.json": {
+       "phases": [
+        {
+         "id": "P1",
+         "title": "Greeting",
+         "acceptance": "greeting.txt says hello",
+         "paths": [
+          "greeting.txt"
+         ],
+         "required_checks": [
+          "unit"
+         ]
+        },
+        {
+         "id": "P2",
+         "title": "Slow",
+         "acceptance": "slow.txt exists",
+         "paths": [
+          "slow.txt"
+         ],
+         "required_checks": [
+          "unit"
+         ]
+        }
+       ]
+      }
+     }
+    },
+    {
+     "name": "consult packet",
+     "do": "packet",
+     "file": "consult.md",
+     "header": {
+      "mode": "consult",
+      "name": "hang-1",
+      "orchestrator": "orch",
+      "workspace": "{root}"
+     },
+     "body": "Anything."
+    },
+    {
+     "name": "a hanging worker is started with a timeout",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "start",
+      "--session",
+      "orch",
+      "--expect-revision",
+      "{rev}",
+      "--name",
+      "hang-1",
+      "--provider",
+      "stub",
+      "--mode",
+      "consult",
+      "--packet",
+      "{packets}/consult.md",
+      "--timeout",
+      "5",
+      "--",
+      "{python}",
+      "{stub}",
+      "{packet}",
+      "--behavior",
+      "hang"
+     ]
+    },
+    {
+     "name": "a reply for it arrives early",
+     "do": "reply",
+     "file": "early.txt",
+     "result": {
+      "outcome": "completed",
+      "summary": "early",
+      "answer": "x"
+     }
+    },
+    {
+     "name": "collect --from is refused while the worker still runs",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "collect",
+      "--session",
+      "orch",
+      "--name",
+      "hang-1",
+      "--from",
+      "{packets}/early.txt"
+     ],
+     "expect": [
+      {
+       "path": "ok",
+       "equals": false
+      },
+      {
+       "path": "error.code",
+       "equals": "delegation_running"
+      }
+     ]
+    },
+    {
+     "name": "the supervisor stops it at the timeout",
+     "do": "wait",
+     "delegation": "hang-1",
+     "expect": [
+      {
+       "path": "status",
+       "equals": "exited"
+      },
+      {
+       "path": "runtime.timed_out",
+       "equals": true
+      }
+     ]
+    },
+    {
+     "name": "collect finds no result",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "collect",
+      "--session",
+      "orch",
+      "--name",
+      "hang-1"
+     ],
+     "expect": [
+      {
+       "path": "result.status",
+       "equals": "malformed"
+      }
+     ]
+    },
+    {
+     "name": "cancel closes it",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "cancel",
+      "--session",
+      "orch",
+      "--name",
+      "hang-1"
+     ],
+     "expect": [
+      {
+       "path": "result.status",
+       "equals": "cancelled"
+      }
+     ]
+    },
+    {
+     "name": "a garbling worker is started",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "start",
+      "--session",
+      "orch",
+      "--expect-revision",
+      "{rev}",
+      "--name",
+      "garble-1",
+      "--provider",
+      "stub",
+      "--mode",
+      "consult",
+      "--packet",
+      "{packets}/consult.md",
+      "--",
+      "{python}",
+      "{stub}",
+      "{packet}",
+      "--behavior",
+      "garbage"
+     ]
+    },
+    {
+     "name": "it exits",
+     "do": "wait",
+     "delegation": "garble-1",
+     "expect": [
+      {
+       "path": "status",
+       "equals": "exited"
+      }
+     ]
+    },
+    {
+     "name": "its reply is reported as malformed, not accepted",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "collect",
+      "--session",
+      "orch",
+      "--name",
+      "garble-1"
+     ],
+     "expect": [
+      {
+       "path": "result.status",
+       "equals": "malformed"
+      },
+      {
+       "path": "result.error",
+       "contains": "RELAY-RESULT"
+      }
+     ]
+    },
+    {
+     "name": "a corrected reply can still be collected",
+     "do": "reply",
+     "file": "garble-reply.txt",
+     "result": {
+      "outcome": "completed",
+      "summary": "Second try",
+      "answer": "fine"
+     }
+    },
+    {
+     "name": "collect the corrected reply",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "collect",
+      "--session",
+      "orch",
+      "--name",
+      "garble-1",
+      "--from",
+      "{packets}/garble-reply.txt"
+     ],
+     "expect": [
+      {
+       "path": "result.status",
+       "equals": "returned"
+      }
+     ]
+    },
+    {
+     "name": "worktree for the lying worker",
+     "do": "git",
+     "args": [
+      "worktree",
+      "add",
+      "-q",
+      "-b",
+      "relay/lie",
+      "{wt}"
+     ]
+    },
+    {
+     "name": "write packet",
+     "do": "packet",
+     "file": "write.md",
+     "header": {
+      "mode": "write",
+      "name": "lie-1",
+      "orchestrator": "orch",
+      "phase": "P1",
+      "worker_session": "worker-lie",
+      "workspace": "{wt}",
+      "allowed_paths": [
+       "greeting.txt"
+      ],
+      "required_checks": {
+       "unit": [
+        "{python}",
+        "-c",
+        "pass"
+       ]
+      }
+     },
+     "body": "Create greeting.txt."
+    },
+    {
+     "name": "a writer that skips its checks is started",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "start",
+      "--session",
+      "orch",
+      "--expect-revision",
+      "{rev}",
+      "--name",
+      "lie-1",
+      "--provider",
+      "stub",
+      "--mode",
+      "write",
+      "--phase",
+      "P1",
+      "--worker-session",
+      "worker-lie",
+      "--workspace",
+      "{wt}",
+      "--packet",
+      "{packets}/write.md",
+      "--",
+      "{python}",
+      "{stub}",
+      "{packet}",
+      "--behavior",
+      "lie",
+      "--edit",
+      "greeting.txt=hello",
+      "--edit",
+      "other.txt=surprise"
+     ]
+    },
+    {
+     "name": "it exits",
+     "do": "wait",
+     "delegation": "lie-1",
+     "expect": [
+      {
+       "path": "status",
+       "equals": "exited"
+      }
+     ]
+    },
+    {
+     "name": "collect exposes the unrecorded checks and the unreported out-of-scope file",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "collect",
+      "--session",
+      "orch",
+      "--name",
+      "lie-1"
+     ],
+     "expect": [
+      {
+       "path": "result.status",
+       "equals": "returned"
+      },
+      {
+       "path": "result.discrepancies.0",
+       "contains": "claimed to pass"
+      },
+      {
+       "path": "result.discrepancies",
+       "contains": "Required check unit"
+      },
+      {
+       "path": "result.discrepancies",
+       "contains": "Workspace changes outside the phase paths: other.txt"
+      }
+     ]
+    },
+    {
+     "name": "slow writer packet (its check ignores SIGTERM)",
+     "do": "packet",
+     "file": "slow.md",
+     "header": {
+      "mode": "write",
+      "name": "slow-1",
+      "orchestrator": "orch",
+      "phase": "P2",
+      "worker_session": "worker-slow",
+      "workspace": "{root}",
+      "allowed_paths": [
+       "slow.txt"
+      ],
+      "required_checks": {
+       "unit": [
+        "{python}",
+        "-c",
+        "import signal, time; signal.signal(signal.SIGTERM, signal.SIG_IGN); time.sleep(600)  # relay-golden-slow"
+       ]
+      }
+     },
+     "body": "Create slow.txt."
+    },
+    {
+     "name": "a writer whose check outlives the relay timeout is started",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "start",
+      "--session",
+      "orch",
+      "--expect-revision",
+      "{rev}",
+      "--name",
+      "slow-1",
+      "--provider",
+      "stub",
+      "--mode",
+      "write",
+      "--phase",
+      "P2",
+      "--worker-session",
+      "worker-slow",
+      "--packet",
+      "{packets}/slow.md",
+      "--timeout",
+      "6",
+      "--",
+      "{python}",
+      "{stub}",
+      "{packet}",
+      "--edit",
+      "slow.txt=slow"
+     ],
+     "expect": [
+      {
+       "path": "ok",
+       "equals": true
+      }
+     ]
+    },
+    {
+     "name": "the supervisor stops it at the timeout",
+     "do": "wait",
+     "delegation": "slow-1",
+     "timeout": 60,
+     "expect": [
+      {
+       "path": "status",
+       "equals": "exited"
+      },
+      {
+       "path": "runtime.timed_out",
+       "equals": true
+      },
+      {
+       "path": "worker.recorded_checks.unit",
+       "equals": "abandoned"
+      }
+     ]
+    },
+    {
+     "name": "its check process did not survive",
+     "do": "no_process",
+     "pattern": "relay-golden-slow"
+    },
+    {
+     "name": "cancel closes it and names the worker session to release",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "cancel",
+      "--session",
+      "orch",
+      "--name",
+      "slow-1"
+     ],
+     "expect": [
+      {
+       "path": "result.status",
+       "equals": "cancelled"
+      },
+      {
+       "path": "result.next",
+       "contains": "worker-slow"
+      }
+     ]
+    },
+    {
+     "name": "the user confirmed the worker stopped; release it",
+     "do": "runtime",
+     "args": [
+      "release",
+      "--session",
+      "worker-slow",
+      "--expect-revision",
+      "{rev}",
+      "--confirm-stopped",
+      "--reason",
+      "relay timeout",
+      "--by",
+      "orch"
+     ],
+     "expect": [
+      {
+       "path": "ok",
+       "equals": true
+      }
+     ]
+    },
+    {
+     "name": "review packet",
+     "do": "packet",
+     "file": "review.md",
+     "header": {
+      "mode": "review",
+      "name": "late-1",
+      "orchestrator": "orch",
+      "workspace": "{root}"
+     },
+     "body": "Review."
+    },
+    {
+     "name": "a host review is still running",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "start",
+      "--session",
+      "orch",
+      "--name",
+      "late-1",
+      "--provider",
+      "codex",
+      "--mode",
+      "review",
+      "--packet",
+      "{packets}/review.md",
+      "--host-ref",
+      "t3:task-7"
+     ]
+    },
+    {
+     "name": "ending the orchestrator reports it as open",
+     "do": "runtime",
+     "args": [
+      "end",
+      "--session",
+      "orch",
+      "--expect-revision",
+      "{rev}",
+      "--next-action",
+      "collect late-1"
+     ],
+     "expect": [
+      {
+       "path": "result.open_delegations.0",
+       "equals": "late-1"
+      }
+     ]
+    },
+    {
+     "name": "a new orchestrator sees it on begin",
+     "do": "runtime",
+     "args": [
+      "begin",
+      "--session",
+      "orch-2"
+     ],
+     "expect": [
+      {
+       "path": "result.open_delegations.0.name",
+       "equals": "late-1"
+      }
+     ]
+    },
+    {
+     "name": "host reply",
+     "do": "reply",
+     "file": "late-reply.txt",
+     "result": {
+      "outcome": "completed",
+      "summary": "Fine",
+      "verdict": "APPROVE",
+      "findings": []
+     }
+    },
+    {
+     "name": "the new orchestrator adopts and collects it",
+     "do": "runtime",
+     "args": [
+      "delegate",
+      "collect",
+      "--session",
+      "orch-2",
+      "--name",
+      "late-1",
+      "--from",
+      "{packets}/late-reply.txt"
+     ],
+     "expect": [
+      {
+       "path": "result.status",
+       "equals": "returned"
+      },
+      {
+       "path": "result.session_id",
+       "equals": "orch-2"
+      },
+      {
+       "path": "result.adopted_from",
+       "equals": "orch"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

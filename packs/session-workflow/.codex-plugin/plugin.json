@@ -1,7 +1,7 @@
 {
   "name": "estafeta",
-  "version": "3.0.0",
-  "description": "Resumable multi-session projects: checkpoints, phased plans with recorded checks, handovers and safe parallel sessions.",
+  "version": "3.1.0",
+  "description": "Resumable multi-session projects: checkpoints, phased plans with recorded checks, handovers, safe parallel sessions and cross-provider delegation.",
   "author": {
     "name": "pashbel"
   },
@@ -11,7 +11,7 @@
   "interface": {
     "displayName": "estafeta",
     "shortDescription": "Resumable development across sessions and providers",
-    "longDescription": "Resumable multi-session projects: checkpoints, phased plans with recorded checks, handovers and safe parallel sessions.",
+    "longDescription": "Resumable multi-session projects: checkpoints, phased plans with recorded checks, handovers, safe parallel sessions and cross-provider delegation.",
     "developerName": "pashbel",
     "category": "Productivity",
     "capabilities": [
@@ -22,7 +22,8 @@
     "defaultPrompt": [
       "Use session-guide to learn how estafeta works.",
       "Use session-start to resume this project.",
-      "Use plan-and-orchestrate to execute the authorized plan."
+      "Use plan-and-orchestrate to execute the authorized plan.",
+      "Use agent-relay to have another AI provider review this change."
     ]
   }
 }

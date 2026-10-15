@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Relay"
+  short_description: "Consult, review or delegate work to another AI provider"
+  default_prompt: "Use $agent-relay to delegate this to another provider and judge its result against fresh checks."

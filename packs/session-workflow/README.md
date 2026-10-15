@@ -1,6 +1,6 @@
-<a name="estafeta-300"></a>
+<a name="estafeta-310"></a>
 
-# ![estafeta 3.0.0](assets/headings/estafeta-300.svg)
+# ![estafeta 3.1.0](assets/headings/estafeta-310.svg)
 
 ![estafeta — Pass the context & Keep building.](assets/cover.webp)
 
@@ -9,7 +9,9 @@ Four skills act on one durable project record:
 `session-start → plan-and-orchestrate → session-handover → session-end`
 
 `session-guide` explains all of this to a new user in a few lines and shows
-where the project stands, without changing anything. Handover updates can
+where the project stands, without changing anything. `agent-relay` brings in
+other AI providers: it consults one, gets a cross-review, or delegates a phase
+to it. Handover updates can
 happen at any milestone; they do not end the session.
 Ending a session checkpoints unfinished work and never marks it complete.
 
@@ -27,6 +29,29 @@ Use the same plain request with any provider; slash or dollar syntax is optional
 | Execute | Use plan-and-orchestrate. Execute the ready phases of this plan. |
 | Record a milestone | Use session-handover. Record the current changes and evidence. |
 | End / hand off | Use session-end. Save context to continue on another device. |
+| Ask another provider | Use agent-relay. Ask Codex whether this migration is safe. |
+| Cross-review | Use agent-relay. Have Claude review the diff of this phase. |
+| Delegate a phase | Use agent-relay. Delegate phase P2 to Codex in its own worktree. |
+
+<a name="several-providers"></a>
+
+## ![Several providers](assets/headings/several-providers.svg)
+
+One chat is the orchestrator and the only integrator. It reaches other providers
+through the host's own child tasks, such as T3 Code's `delegate_task`, or
+through their CLIs (`codex exec`, `claude -p`, `gemini -p`), which run as
+supervised processes.
+
+- Every delegation is recorded with its provider, model, packet and result, so
+  a later chat can resume it without the host's task IDs.
+- A writer works in its own worktree under its own parallel session, claims
+  its phase and records its checks.
+- The orchestrator compares the writer's claims with the recorded facts,
+  commits and merges the change, and reruns the checks before DONE.
+- Agents the user opens in parallel work as peers on disjoint phases.
+
+The [adapters](skills/agent-relay/references/adapters.md) list the exact commands
+and the flags that are never used by default.
 
 <a name="project-record"></a>
 
@@ -43,6 +68,24 @@ The runtime keeps execution state (phases, owners, checks, checkpoints) in
 `.agent-state/session-workflow`, ignored by Git. The
 [contract](shared/workflow-contract.md) holds all shared rules, and the
 [quickstart](shared/quickstart.md) holds every command an ordinary session needs.
+
+<a name="changes-in-310"></a>
+
+## ![Changes in 3.1.0](assets/headings/changes-in-310.svg)
+
+- New skill `agent-relay`: consult, cross-review and delegated writes across
+  providers, plus rules for peer agents.
+- New runtime command `delegate` (`providers`, `start`, `status`, `collect`,
+  `cancel`). A CLI worker runs as a supervised runtime with a timeout. A host
+  task is recorded by reference. Results come back as one `RELAY-RESULT` block,
+  and a writer's claims are checked against recorded facts.
+- `end` stops the session's CLI workers and lists open delegations. `begin` and
+  `status` show them, and a later session adopts them.
+- State schema 2 is unchanged: records live in `delegations/` beside the state,
+  so a 3.0.0 runtime can still join as a worker.
+- Golden path integration tests (`scripts/test_relay.py`) play representative
+  sequences of interactions with a stub worker on every change, and a live run
+  is checked with `--live-verify`. CI runs them with the other suites.
 
 <a name="changes-in-300"></a>
 
@@ -93,7 +136,10 @@ once.
   and is untested.
 - Instructions are identical across providers, but model behaviour is not.
   Check the first real session on each new provider before treating its
-  behaviour as validated.
+  behaviour as validated. The same applies to every new provider and model
+  pair used through agent-relay.
+- The Codex and Gemini CLI adapters follow official documentation. Only the
+  transports listed in the [validation record](VALIDATION.md) have run live.
 
 <a name="install"></a>
 

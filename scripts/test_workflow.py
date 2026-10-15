@@ -262,6 +262,32 @@ class WorkflowTests(unittest.TestCase):
         self.assertFalse((self.target / "session-start").is_symlink())
         self.assertTrue((w.PACK / "skills/session-start/SKILL.md").is_file())
 
+    def test_relay_packet_template_matches_runtime_and_golden_worker(self):
+        base = w.PACK / "skills/agent-relay"
+        text = (base / "templates/packet.md").read_text(encoding="utf-8")
+        spec = importlib.util.spec_from_file_location("relay_runtime", base / "scripts/session.py")
+        runtime = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(runtime)
+        self.assertIn(runtime.RELAY_OPEN, text)
+        self.assertIn(runtime.RELAY_CLOSE, text)
+        for outcome in runtime.RELAY_OUTCOMES:
+            self.assertIn(outcome, text)
+        header = text.split("```relay-packet", 1)[1].split("```", 1)[0]
+        stub = (Path(__file__).with_name("golden") / "stub_worker.py").read_text(encoding="utf-8")
+        for key in ("mode", "workspace", "runtime", "phase", "worker_session", "required_checks"):
+            self.assertIn(f'"{key}"', header)
+            self.assertIn(f'packet["{key}"]', stub)
+        adapters = (base / "references/adapters.md").read_text(encoding="utf-8")
+        for token in ("{packet_text}", "{reply_file}", "{workspace}", "{state_dir}"):
+            self.assertIn(token, adapters)
+
+    def test_live_verify_refuses_a_scenario_without_verify_steps(self):
+        spec = importlib.util.spec_from_file_location("relay_golden", Path(__file__).with_name("test_relay.py"))
+        golden = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(golden)
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            golden.main(["--live-verify", "failures", "--root", str(self.base)])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

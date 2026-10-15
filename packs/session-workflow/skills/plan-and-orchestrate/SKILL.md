@@ -10,14 +10,15 @@ description: >-
 license: Apache-2.0
 metadata:
   workflow-pack: session-workflow
-  workflow-version: "3.0.0"
+  workflow-version: "3.1.0"
 ---
 
 # Plan and orchestrate
 
 Read the [contract](references/workflow-contract.md) and
 [quickstart](references/quickstart.md) once per chat. For parallel agents, also
-read [delegation](references/delegation.md). If this chat has no session yet,
+read [delegation](references/delegation.md); for other AI providers, use the
+agent-relay skill. If this chat has no session yet,
 run session-start first.
 
 1. **Frame** the outcome, acceptance, constraints and non-goals. Reuse an

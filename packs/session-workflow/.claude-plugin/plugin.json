@@ -1,7 +1,7 @@
 {
   "name": "estafeta",
-  "version": "3.0.0",
-  "description": "Resumable multi-session projects: checkpoints, phased plans with recorded checks, handovers and safe parallel sessions.",
+  "version": "3.1.0",
+  "description": "Resumable multi-session projects: checkpoints, phased plans with recorded checks, handovers, safe parallel sessions and cross-provider delegation.",
   "author": {
     "name": "pashbel"
   },
