@@ -8,7 +8,7 @@ Do not publish credentials, local runtime state, or personal logs.
 
 ## Documentation map
 
-- Plan: docs/plans/multi-provider.md (multi-provider relay).
+- Plan: docs/plans/relay-hardening.md (3.1.1); previous: docs/plans/multi-provider.md.
 - Handover: HANDOVER.md.
 - Installation: docs/INSTALL.md; usage: docs/USAGE.md.
 - Maintenance and checks: docs/MAINTAINING.md.
