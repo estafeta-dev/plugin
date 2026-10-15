@@ -14,6 +14,7 @@ scenario's session and delegation IDs by the live ones.
 import argparse
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -128,13 +129,15 @@ class Run:
                 time.sleep(0.2)
             raise StepFailed("delegation still running at the wait timeout")
         if action == "no_process":
+            # The pattern carries this run's fixture path, so other runs' processes never match.
+            pattern = self.fill(step["pattern"])
             deadline = time.monotonic() + step.get("timeout", 10)
             if os.name == "nt":
                 query = ["powershell", "-NoProfile", "-Command",
                          "Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine "
-                         f"-like '*{step['pattern']}*' }} | ForEach-Object {{ $_.ProcessId }}"]
+                         f"-like '*{pattern}*' }} | ForEach-Object {{ $_.ProcessId }}"]
             else:
-                query = ["pgrep", "-f", step["pattern"]]
+                query = ["pgrep", "-f", re.escape(pattern)]
             while True:  # a stopped process may need a moment to be reaped
                 done = subprocess.run(query, capture_output=True, text=True)
                 if not done.stdout.strip() or time.monotonic() > deadline:

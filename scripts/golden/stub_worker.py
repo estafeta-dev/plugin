@@ -58,6 +58,11 @@ def write(packet, args):
                        "--phase", pid, "--name", name, "--timeout", "900", "--", *argv)
         rev = done["revision"]
         checks.append({"name": name, "result": done["result"]["result"]})
+        if done["result"]["result"] != "pass":
+            # As the packet asks: a failed or stopped required check means report blocked and stop here.
+            reply({"outcome": "blocked", "summary": f"Check {name} ended {done['result']['result']}",
+                   "worker_session": sid, "changed_files": changed, "checks": checks, "gaps": [name]})
+            return
     rev = runtime(packet, "transition", "--session", sid, "--expect-revision", str(rev),
                   "--phase", pid, "--to", "VERIFY")["revision"]
     runtime(packet, "end", "--session", sid, "--expect-revision", str(rev),

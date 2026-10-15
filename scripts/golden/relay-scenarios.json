@@ -1604,7 +1604,7 @@
        "unit": [
         "{python}",
         "-c",
-        "import signal, time; signal.signal(signal.SIGTERM, signal.SIG_IGN); time.sleep(600)  # relay-golden-slow"
+        "import signal, time; signal.signal(signal.SIGTERM, signal.SIG_IGN); time.sleep(600)  # relay-golden-slow {packets}"
        ]
       }
      },
@@ -1671,7 +1671,7 @@
     {
      "name": "its check process did not survive",
      "do": "no_process",
-     "pattern": "relay-golden-slow"
+     "pattern": "relay-golden-slow {packets}"
     },
     {
      "name": "cancel closes it and names the worker session to release",

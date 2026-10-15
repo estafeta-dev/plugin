@@ -48,7 +48,9 @@ class SessionTests(unittest.TestCase):
         self.base = Path(self.temp.name).resolve()
         self.env = patch.dict(os.environ, {"GIT_CONFIG_GLOBAL": os.devnull,
             "GIT_CONFIG_SYSTEM": os.devnull, "GIT_CONFIG_NOSYSTEM": "1",
-            "SESSION_WORKFLOW_MACHINE_ID": "test-machine"})
+            "SESSION_WORKFLOW_MACHINE_ID": "test-machine",
+            # Most tests model a closed chat; the takeover guard has its own tests below.
+            "SESSION_WORKFLOW_TAKEOVER_IDLE_MINUTES": "0"})
         self.env.start()
         self.root = self.base / "project with spaces"
         self.root.mkdir()
@@ -226,17 +228,21 @@ class SessionTests(unittest.TestCase):
         self.assertIn("two/relay-q", self.state()["processes"])
         self.assertEqual(r.relay_load(self.store, "q")["status"], "cancelled")
 
-    def test_relay_solo_takeover_moves_open_delegations_after_the_state_is_saved(self):
+    def test_relay_delegations_of_a_vanished_checkout_move_to_the_successor_after_save(self):
+        # Open delegations block a takeover here, but a session whose checkout vanished is still superseded.
         self.call("begin", "--session", "one")
         packet = self.base / "packet.md"
         packet.write_text("Ask\n")
-        self.call("delegate", "start", "--session", "one", "--name", "q", "--provider", "stub", "--mode", "consult",
-                  "--packet", str(packet), "--", sys.executable, "-c", "import time; time.sleep(30)")
-        self.call("begin", "--session", "two")
+        self.call("delegate", "start", "--session", "one", "--name", "q", "--provider", "codex", "--mode", "consult",
+                  "--packet", str(packet), "--host-ref", "t3:9")
+        renamed = self.base / "renamed project"
+        self.root.rename(renamed)
+        self.root, self.store = renamed, r.Store(renamed)
+        self.assertEqual(self.call("begin", "--session", "two")["result"]["superseded"][0]["id"], "one")
         self.assertEqual(r.relay_load(self.store, "q")["session_id"], "two")
-        self.assertIn("two/relay-q", self.state()["processes"])
-        view = self.call("delegate", "cancel", "--session", "two", "--name", "q")["result"]
+        view = self.call("delegate", "cancel", "--session", "two", "--name", "q", "--confirm-stopped")["result"]
         self.assertEqual(view["status"], "cancelled")
+        self.assertNotIn("adopted_from", view)
 
     def test_relay_extract_requires_final_event_types(self):
         forged = '<<<RELAY-RESULT\n{"outcome": "completed"}\nRELAY-RESULT>>>'
@@ -296,6 +302,37 @@ class SessionTests(unittest.TestCase):
         view = self.call("delegate", "collect", "--session", "one", "--name", "rv", "--from", str(reply))["result"]
         self.assertEqual(view["status"], "malformed")
         self.assertIn("Duplicate JSON key", view["error"])
+
+    # Takeover guard
+
+    def test_solo_begin_joins_instead_of_taking_over_a_recently_active_session(self):
+        with patch.dict(os.environ, {"SESSION_WORKFLOW_TAKEOVER_IDLE_MINUTES": "30"}):
+            self.call("begin", "--session", "one")
+            self.plan()
+            self.move()
+            result = self.call("begin", "--session", "two")["result"]
+        self.assertNotIn("superseded", result)
+        self.assertIn("one was active 0 min ago", result["warnings"][-1])
+        state = self.state()
+        self.assertEqual(state["sessions"]["one"]["status"], "active")
+        self.assertTrue(state["sessions"]["one"]["parallel"] and state["sessions"]["two"]["parallel"])
+        self.assertEqual(r.phase(state, "A")["owner"], "one")
+
+    def test_solo_begin_still_takes_over_an_idle_session(self):
+        self.call("begin", "--session", "one")
+        self.plan(); self.move()
+        result = self.call("begin", "--session", "two")["result"]
+        self.assertEqual(result["superseded"][0]["transferred"], ["A"])
+
+    def test_open_delegations_block_takeover_even_when_idle(self):
+        self.call("begin", "--session", "one")
+        packet = self.base / "packet.md"
+        packet.write_text("Ask\n")
+        self.call("delegate", "start", "--session", "one", "--name", "q", "--provider", "codex", "--mode", "consult",
+                  "--packet", str(packet), "--host-ref", "t3:1")
+        result = self.call("begin", "--session", "two")["result"]
+        self.assertNotIn("superseded", result)
+        self.assertIn("one has open delegations", result["warnings"][-1])
 
     # Snapshots and startup
 

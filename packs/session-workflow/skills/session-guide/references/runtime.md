@@ -41,8 +41,20 @@ from its own machine and path; elsewhere it gets `session_foreign`.
 
 Solo `begin`, the default, ends earlier sessions recorded in this checkout, or
 in a checkout path that no longer exists on this machine. It moves their claims
-and runtimes to the new session. A session that is still running a check blocks
-this with `session_alive`.
+and runtimes to the new session, and their open delegations once the state is
+saved. A session that is still running a check blocks this with
+`session_alive`.
+
+A session in this checkout that acted within
+`SESSION_WORKFLOW_TAKEOVER_IDLE_MINUTES` (default 30), or that has open
+delegations, may belong to a live thread. A solo `begin` then joins in
+parallel, takes over nothing and warns.
+
+Activity is measured from the runtime's own records:
+
+- the session's begin and checkpoints;
+- its events and checks;
+- its delegations.
 
 `begin --parallel` puts the checkout in parallel mode, which marks every
 active session there as parallel. While any parallel session is active in a

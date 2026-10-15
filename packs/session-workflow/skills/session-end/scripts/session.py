@@ -872,6 +872,42 @@ def prior_checkpoint(state, store):
     return best
 
 
+def parse_time(value):
+    try:
+        return datetime.fromisoformat(value).timestamp()
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def last_activity(store, state, session_id):
+    """Latest moment the runtime saw this session act: begin, checkpoints, its events, checks and delegations."""
+    s = state["sessions"][session_id]
+    times = [parse_time(s["started_at"]), parse_time((s.get("checkpoint") or {}).get("at"))]
+    runs = {c["id"] for c in state["checks"].values() if c["session_id"] == session_id}
+    for event in state["events"]:
+        target = event.get("event", "").split(":", 1)[-1]
+        if target == session_id or target in runs:
+            times.append(parse_time(event.get("at")))
+    for record in relay_records(store):
+        if record["session_id"] == session_id:
+            times += [parse_time(record.get("started_at")), parse_time(record.get("finished_at"))]
+    return max(times)
+
+
+def takeover_blockers(store, state, candidates):
+    """Sessions a solo begin must not take over: recently active ones, or those with open delegations."""
+    idle = 60 * float(os.environ.get("SESSION_WORKFLOW_TAKEOVER_IDLE_MINUTES", "30"))
+    delegating = {r["session_id"] for r in relay_open(store)}
+    blockers = []
+    for sid in candidates:
+        quiet = time.time() - last_activity(store, state, sid)
+        if sid in delegating:
+            blockers.append(f"{sid} has open delegations")
+        elif quiet < idle:
+            blockers.append(f"{sid} was active {int(quiet // 60)} min ago")
+    return blockers
+
+
 def begin(store, args):
     with file_lock(store.directory / ".lock"):
         state = store.load() if store.path.exists() else initial_state(store, args)
@@ -887,6 +923,14 @@ def begin(store, args):
         # been released: nobody here is taken over, and new sessions join instead of superseding.
         parallel_here = [sid for sid in here if state["sessions"][sid]["parallel"]]
         joined = bool(parallel_here) and not args.parallel
+        # Another thread or agent may still be working here (T3 runs several threads in one folder):
+        # a solo begin does not take over a recently active session; it joins in parallel instead.
+        guarded = [] if args.parallel or joined else takeover_blockers(
+            store, state, [sid for sid in here if live_checks(store, state, sid) == []])
+        if guarded:
+            joined = True
+            for sid in here:
+                state["sessions"][sid]["parallel"] = True
         if args.parallel:
             for sid in here:
                 state["sessions"][sid]["parallel"] = True
@@ -914,7 +958,12 @@ def begin(store, args):
         result = brief(state, store, session_id, live)
         if superseded:
             result["superseded"] = superseded
-        if joined:
+        if guarded:
+            result["warnings"] = result.get("warnings", []) + [
+                "Another session here may still be working (" + "; ".join(guarded) + "), so this session joined "
+                "in parallel and took over nothing. Claim paths no one else claims. If that chat has stopped, "
+                "confirm with the user and release it."]
+        elif joined:
             result["warnings"] = result.get("warnings", []) + [
                 "Parallel work is in progress in this checkout (" + ", ".join(parallel_here) + "); this session "
                 "joined it and took over nothing. Claim paths no one else claims; release a session only after "
@@ -1128,6 +1177,26 @@ class Interrupted(Exception):
     pass
 
 
+STOP_FILE = "SESSION_WORKFLOW_STOP_FILE"
+
+
+def wait_for_check(child, timeout):
+    """Wait like Popen.wait, but also stop when the supervisor of an enclosing worker asks for it.
+
+    Signals cannot reach a check started by a worker everywhere (a Windows process without a console gets no
+    CTRL_BREAK), so the supervisor also writes the file named in SESSION_WORKFLOW_STOP_FILE.
+    """
+    stop_file, deadline = os.environ.get(STOP_FILE), time.monotonic() + timeout
+    while True:
+        try:
+            return child.wait(timeout=min(0.2, max(0.0, deadline - time.monotonic())))
+        except subprocess.TimeoutExpired:
+            if stop_file and os.path.exists(stop_file):
+                raise Interrupted()
+            if time.monotonic() >= deadline:
+                raise
+
+
 @contextmanager
 def interrupt_guard():
     """Turn SIGTERM/SIGHUP into Interrupted while a check runs, so its separate process group is not orphaned."""
@@ -1155,7 +1224,7 @@ def run_check(store, state, p, args, run_id, command, before):
                                      stdin=subprocess.DEVNULL, shell=False, **group_kwargs())
             try:
                 with interrupt_guard():
-                    code = child.wait(timeout=args.timeout)
+                    code = wait_for_check(child, args.timeout)
                 outcome = "pass" if code == 0 else "fail"
             except subprocess.TimeoutExpired:
                 terminate_group(child)
@@ -1225,6 +1294,14 @@ def stop_runtime(store, record):
     return {"status": "unknown", "reason": "Stop receipt unavailable; process was not killed by PID"}
 
 
+def request_stop(stop_request, running, grace):
+    """Tell nested check runners to stop their checks before any signal: they record the run as abandoned."""
+    atomic_write(stop_request, "stop\n")
+    deadline = time.monotonic() + min(3.0, grace / 2)
+    while running() and time.monotonic() < deadline:
+        time.sleep(0.1)
+
+
 def supervise(spec_path):
     """Private supervisor: owns one process group through a live Popen handle; accepts no PID."""
     spec_path = Path(spec_path).resolve()
@@ -1233,11 +1310,13 @@ def supervise(spec_path):
     receipt_path = directory / "receipt.json"
     try:
         # A delegated worker's stderr (progress, tool output) stays apart from its final answer on stdout.
+        stop_request = directory / "stop-request"
         with open(directory / "output.log", "ab") as output, \
                 open(directory / spec.get("stderr", "output.log"), "ab") as errors:
             child = subprocess.Popen(spec["argv"], cwd=spec["root"], stdout=output,
                                      stderr=errors if spec.get("stderr") else subprocess.STDOUT,
-                                     stdin=subprocess.DEVNULL, shell=False, **group_kwargs())
+                                     stdin=subprocess.DEVNULL, shell=False,
+                                     env={**os.environ, STOP_FILE: str(stop_request)}, **group_kwargs())
             stop, beat = directory / "stop.json", 0.0
             started, limit, timed_out = time.monotonic(), spec.get("timeout"), False
             job = None
@@ -1260,9 +1339,11 @@ def supervise(spec_path):
                                  "leader_exited": child.returncode is not None}) + "\n", durable=False)
                     beat = time.monotonic()
                 if stop.exists() and read_json(stop).get("run_id") == spec["run_id"]:
+                    request_stop(stop_request, running, spec.get("grace", 4.0))
                     terminate_group(child, spec.get("grace", 4.0), job)
                     break
                 if limit and time.monotonic() - started > limit:
+                    request_stop(stop_request, running, spec.get("grace", 4.0))
                     terminate_group(child, spec.get("grace", 4.0), job)
                     timed_out = True
                     break

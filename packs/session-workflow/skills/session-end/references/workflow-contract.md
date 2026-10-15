@@ -13,7 +13,9 @@ Update only changed facts: no empty sections, ceremonial phases or pasted logs.
 
 **Sessions.** Each chat begins its own session. Solo is the default: a new
 session supersedes earlier sessions in the same checkout and takes over their
-claims and runtimes. Use `--parallel` when the user says, in any language, that
+claims and runtimes. A session that acted in the last 30 minutes or has open
+delegations may belong to a live chat or thread, so the new session joins in
+parallel instead and warns. Use `--parallel` when the user says, in any language, that
 another live agent works in the same checkout. The checkout then stays in
 parallel mode until every session there
 has ended or been released: nobody is taken over, and new sessions join. An
