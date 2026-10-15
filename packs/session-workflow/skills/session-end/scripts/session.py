@@ -1040,18 +1040,68 @@ def group_alive(pgid):
         return True
 
 
-def terminate_group(child, grace=4.0):
+class WindowsJob:
+    """A Windows Job Object: the counterpart of a POSIX process group for descendants of one child."""
+
+    def __init__(self, pid):
+        import ctypes
+        from ctypes import wintypes
+        self.ctypes, self.wintypes = ctypes, wintypes
+        self.kernel = k = ctypes.WinDLL("kernel32", use_last_error=True)
+        signatures = {
+            "CreateJobObjectW": ([wintypes.LPVOID, wintypes.LPCWSTR], wintypes.HANDLE),
+            "OpenProcess": ([wintypes.DWORD, wintypes.BOOL, wintypes.DWORD], wintypes.HANDLE),
+            "AssignProcessToJobObject": ([wintypes.HANDLE, wintypes.HANDLE], wintypes.BOOL),
+            "QueryInformationJobObject": ([wintypes.HANDLE, ctypes.c_int, wintypes.LPVOID, wintypes.DWORD,
+                                           ctypes.POINTER(wintypes.DWORD)], wintypes.BOOL),
+            "TerminateJobObject": ([wintypes.HANDLE, wintypes.UINT], wintypes.BOOL),
+            "CloseHandle": ([wintypes.HANDLE], wintypes.BOOL),
+        }
+        for name, (args, result) in signatures.items():
+            getattr(k, name).argtypes, getattr(k, name).restype = args, result
+        self.handle = self.kernel.CreateJobObjectW(None, None)
+        process = self.kernel.OpenProcess(0x0101, False, pid)  # PROCESS_TERMINATE | PROCESS_SET_QUOTA
+        try:
+            if not self.handle or not process or not self.kernel.AssignProcessToJobObject(self.handle, process):
+                raise OSError(ctypes.get_last_error(), "Cannot assign the process to a job object")
+        finally:
+            if process:
+                self.kernel.CloseHandle(process)
+
+    def active(self):
+        ctypes, wintypes = self.ctypes, self.wintypes
+
+        class Accounting(ctypes.Structure):
+            _fields_ = [("user", ctypes.c_int64), ("kernel", ctypes.c_int64), ("period_user", ctypes.c_int64),
+                        ("period_kernel", ctypes.c_int64), ("page_faults", wintypes.DWORD),
+                        ("total", wintypes.DWORD), ("active", wintypes.DWORD), ("terminated", wintypes.DWORD)]
+        info = Accounting()
+        if not self.kernel.QueryInformationJobObject(self.handle, 1, ctypes.byref(info), ctypes.sizeof(info), None):
+            return 0
+        return info.active
+
+    def terminate(self):
+        self.kernel.TerminateJobObject(self.handle, 1)
+
+
+def terminate_group(child, grace=4.0, job=None):
     """Stop the direct child and every descendant in the process group it leads."""
     if os.name == "nt":
-        # Ask the group to stop first (CTRL_BREAK reaches every process in it, and a running check records
-        # itself as abandoned), then force the remaining tree.
-        if child.poll() is None:
+        # Ask the group to stop first: CTRL_BREAK reaches every process in it, and a running check records
+        # itself as abandoned. Then force whatever remains: the whole job, or the tree under a live leader.
+        def alive():
+            return child.poll() is None or (job is not None and job.active() > 0)
+        if alive():
             try:
                 os.kill(child.pid, signal.CTRL_BREAK_EVENT)
-                child.wait(timeout=grace)
-            except (OSError, subprocess.TimeoutExpired):
+            except OSError:
                 pass
-        if child.poll() is None:
+            deadline = time.monotonic() + grace
+            while alive() and time.monotonic() < deadline:
+                time.sleep(0.1)
+        if job is not None and job.active() > 0:
+            job.terminate()
+        elif child.poll() is None:
             subprocess.run(["taskkill", "/T", "/F", "/PID", str(child.pid)], capture_output=True)
         return
     try:
@@ -1190,18 +1240,30 @@ def supervise(spec_path):
                                      stdin=subprocess.DEVNULL, shell=False, **group_kwargs())
             stop, beat = directory / "stop.json", 0.0
             started, limit, timed_out = time.monotonic(), spec.get("timeout"), False
-            # Descendants keep the group alive after the leader exits; supervise until all are gone.
-            while child.poll() is None or group_alive(child.pid):
+            job = None
+            if os.name == "nt":
+                try:
+                    job = WindowsJob(child.pid)
+                except OSError:
+                    job = None  # Fall back to the leader and taskkill /T
+
+            def running():
+                if os.name == "nt":
+                    return child.poll() is None or (job is not None and job.active() > 0)
+                # Descendants keep the group alive after the leader exits.
+                return child.poll() is None or group_alive(child.pid)
+            # Supervise until the leader and all of its descendants are gone.
+            while running():
                 if time.monotonic() - beat >= HEARTBEAT_SECONDS:
                     atomic_write(receipt_path, canonical({"run_id": spec["run_id"], "status": "running",
                                  "heartbeat": time.time(), "pid": child.pid,
                                  "leader_exited": child.returncode is not None}) + "\n", durable=False)
                     beat = time.monotonic()
                 if stop.exists() and read_json(stop).get("run_id") == spec["run_id"]:
-                    terminate_group(child, spec.get("grace", 4.0))
+                    terminate_group(child, spec.get("grace", 4.0), job)
                     break
                 if limit and time.monotonic() - started > limit:
-                    terminate_group(child, spec.get("grace", 4.0))
+                    terminate_group(child, spec.get("grace", 4.0), job)
                     timed_out = True
                     break
                 time.sleep(0.2)

@@ -20,6 +20,28 @@ r = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(r)
 
 
+def pid_alive(pid):
+    """Probe a process without signalling it; os.kill(pid, 0) would terminate it on Windows."""
+    if os.name == "nt":
+        import ctypes
+        kernel = ctypes.WinDLL("kernel32")
+        kernel.OpenProcess.restype = ctypes.c_void_p
+        handle = kernel.OpenProcess(0x00100000 | 0x1000, False, pid)  # SYNCHRONIZE | QUERY_LIMITED_INFORMATION
+        if not handle:
+            return False
+        try:
+            return kernel.WaitForSingleObject(ctypes.c_void_p(handle), 0) == 0x102  # WAIT_TIMEOUT
+        finally:
+            kernel.CloseHandle(ctypes.c_void_p(handle))
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+
+
 class SessionTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="session-runtime-")
@@ -1004,8 +1026,7 @@ class SessionTests(unittest.TestCase):
     # Processes and safety
 
     def test_stopping_a_runtime_stops_its_descendants(self):
-        if os.name == "nt":
-            self.skipTest("Process groups are POSIX-only")
+        # POSIX process groups and Windows job objects must both reach a grandchild.
         self.setup_sessions("one")
         pidfile = self.base / "grandchild.pid"
         script = ("import subprocess, sys\n"
@@ -1021,11 +1042,9 @@ class SessionTests(unittest.TestCase):
         deadline = time.monotonic() + 5
         alive = True
         while alive and time.monotonic() < deadline:
-            try:
-                os.kill(grandchild, 0)
+            alive = pid_alive(grandchild)
+            if alive:
                 time.sleep(0.05)
-            except ProcessLookupError:
-                alive = False
         self.assertFalse(alive, "descendant survived runtime stop")
 
     def test_owned_processes_are_scoped_to_session(self):
