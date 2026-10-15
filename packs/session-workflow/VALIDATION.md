@@ -1,4 +1,57 @@
-# Validation - estafeta 3.0.0
+# Validation - estafeta 3.1.0
+
+## Cross-provider relay, 3.1.0 (2026-10-15)
+
+macOS, Python 3.9.6, orchestrator Claude Opus 5.5 in T3 Code.
+
+**Deterministic suites.** These run on every change and in CI.
+
+| Suite | Result |
+| --- | --- |
+| runtime (`test_session.py`) | 70/70 |
+| installer (`test_workflow.py`) | 21/21 |
+| golden paths (`test_relay.py`, stub worker) | 5/5 scenarios, 79 steps |
+| `workflow.py check` (6 skills) | passed |
+| `claude plugin validate`, plugin and marketplace | passed |
+
+Four deliberate runtime regressions were each caught by a golden step:
+
+- false check claims no longer detected;
+- no supervisor timeout;
+- a worker's check not stopped with its worker;
+- equal grace periods for the supervisor and nested check runners.
+
+**Live golden paths.** Host transport: T3 Code `delegate_task`, provider
+instance `codex`.
+
+| Scenario | Model | Result |
+| --- | --- | --- |
+| write-worktree, disposable fixture | gpt-6.1-sol, medium | PASS. The worker followed the packet: it began its parallel session, claimed P1, ran the required check through the runtime, moved to VERIFY, ended, and returned a valid block. `collect` found no discrepancies. The integrator reviewed and merged the change, reran the check and accepted P1. `--live-verify` passed 2/2 steps. |
+| review-host, this change, round 1 | gpt-6.1-sol, high | PASS (`--live-verify` 1/1). The verdict was CHANGES_REQUIRED with 12 findings, 5 of them high. All 12 were fixed, and each fix has a unit test or golden step. |
+| review-host, fix delta, round 2 | gpt-6.1-sol, high | PASS (`--live-verify` 1/1). 10 of 12 fixes were confirmed. The verdict was CHANGES_REQUIRED with 5 reproduced findings, 3 of them high, about nested kill grace, non-final JSON events, a same-checkout writer, stale check evidence and duplicate JSON keys. All 5 were fixed with tests; the grace fix was mutation-tested. |
+
+**Live CLI transport.** `claude -p` 2.1.300 ran as a supervised `delegate`
+worker, started from inside a Claude Code session.
+
+| Scenario | Model | Result |
+| --- | --- | --- |
+| consult-cli | claude-haiku-5-5 | PASS (`--live-verify` 1/1). The worker read the code and answered correctly. `collect` took the block from the JSON `result` field. |
+| write-worktree, disposable fixture | claude-sonnet-5-5 | PASS (`--live-verify` 2/2). 10 turns, $0.14, OS sandbox with `failIfUnavailable`. No discrepancies; the integrator merged the change, reran the check and accepted the phase. |
+
+The sandbox denied the worker's file tool a write to the state directory, as
+intended: only Bash may write there. The packet template now runs checks
+inline after `--`, so a worker needs no file outside its worktree.
+
+The first live write exposed a real ordering race: the host worker began and
+claimed its phase before the orchestrator recorded the task. The runtime now
+accepts that case, and the `write-host-fast-worker` scenario covers it.
+
+**Not verified:**
+
+- live `codex exec` and `gemini -p` CLI transports (not installed here) and
+  the Gemini/Antigravity host route;
+- the first CI run on GitHub;
+- native Linux and Windows.
 
 ## estafeta rename (2026-10-13)
 

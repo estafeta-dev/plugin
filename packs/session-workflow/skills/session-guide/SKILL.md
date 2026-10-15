@@ -9,7 +9,7 @@ description: >-
 license: Apache-2.0
 metadata:
   workflow-pack: session-workflow
-  workflow-version: "3.0.0"
+  workflow-version: "3.1.0"
 ---
 
 # Session guide
@@ -47,6 +47,7 @@ another device continues from those files instead of from chat history.
 | Work longer than one step | "Use plan-and-orchestrate" | Splits it into phases with acceptance criteria, executes them, runs checks |
 | At a milestone | "Use session-handover" | Writes what changed and why, what is verified and what is left |
 | When stopping | "Use session-end" | Saves the exact next step and stops the servers it started |
+| Another AI should help | "Use agent-relay. Ask Codex / have Claude review / delegate P2" | Runs that provider as a recorded subagent and checks what it reports |
 
 **Files.**
 - PROJECT.md holds the goal and next step, docs/plans/ the plan, and
@@ -59,13 +60,16 @@ another device continues from those files instead of from chat history.
 - It marks a phase DONE only after a check passed. Otherwise the phase stays
   VERIFY, with the gap named.
 
-**What it never does without you.** Commit, push, deploy, paid runs or
-deleting data. A plan alone does not authorize implementation.
+**What it never does without you.** Commit, push, deploy, paid runs
+(including other AI providers) or deleting data. A plan alone does not authorize implementation.
 
 **When you are needed.**
 - **Several agents in one folder:** tell one of them they work in parallel.
   The folder then stays in parallel mode until all of them end, and none takes
-  over another.
+  over another. This works across providers too: Codex, Claude and Gemini share
+  the same records.
+- **Another provider as a helper:** name the provider. Each run costs money,
+  so the agent asks first.
 - **The agent asks whether a chat is closed:** answer, and it releases that
   chat's unfinished work.
 - **A phase stays VERIFY:** something was not checked, for example the UI.

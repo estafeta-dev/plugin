@@ -112,6 +112,62 @@ another machine reports `unknown` or `foreign`; the runtime never kills a
 recorded PID. On Windows the supervisor ends the process tree through
 `taskkill /T` while the child is alive.
 
+## Delegations
+
+| Command | Purpose |
+| --- | --- |
+| `delegate providers` | Read-only: provider CLIs on PATH and their versions |
+| `delegate start --session ID --name N --provider P --mode consult\|review\|write --packet F [--model M] [--phase P --worker-session W] [--workspace DIR] [--timeout S] -- CMD...` | Record a delegation and run a CLI worker as a supervised runtime `relay-N` |
+| `delegate start ... --host-ref REF` (no command) | Record a host-native child task, such as a T3 task ID |
+| `delegate status [--session ID] [--name N]` | Read-only: records, worker runtime, writer facts and result |
+| `delegate collect --session ID --name N [--from FILE] [--confirm-stopped]` | Parse the worker's final RELAY-RESULT block from `--from`, `reply.txt` or the CLI worker's stdout |
+| `delegate cancel --session ID --name N [--confirm-stopped]` | Stop a CLI worker, or close a host task you already cancelled |
+
+- Records live in `delegations/<name>/` under the state directory: the packet,
+  `record.json` and `result.json` with SHA-256 hashes. `state.json` and its
+  schema do not change, so a 3.0 runtime can still take part as a worker.
+- In the worker command, `{packet}`, `{packet_text}`, `{reply_file}`,
+  `{workspace}` and `{state_dir}` are replaced. The worker runs in `--workspace`
+  without a shell or stdin. Its stdout and stderr go to separate logs.
+  `--timeout` stops its process group after a 10-second grace period. Within
+  it, a `check run` started by the worker stops its own check group (1-second
+  grace, then SIGKILL) and records the run as `abandoned`.
+- A writer needs an unclaimed phase that is not DONE and a new worker session
+  ID. A given `--workspace` must share this coordinator (this checkout or a
+  linked worktree); a host task may omit it when the host creates the
+  worktree. The worker begins that session with `--parallel`, claims the phase
+  itself and does not commit: the integrator owns Git history.
+- `collect` takes the last block of the final answer. That is plain text, or
+  one of: a Claude event of type `result`, Gemini's untyped `response`, or a
+  Codex `agent_message` item. Blocks in other events, such as tool results,
+  are ignored. Duplicate JSON keys make a result `malformed`. A missing or invalid block leaves the record
+  `malformed`, and it can be collected again. While a CLI worker runs,
+  `collect` refuses, even with `--from`.
+- For a writer, `discrepancies` lists:
+  - claimed passing checks the worker did not record as passing;
+  - required checks whose latest run is not the worker's, or whose evidence
+    would not pass the DONE gate in the worker's workspace (fingerprint and
+    log);
+  - reported files outside the phase paths (traversal and absolute paths
+    included);
+  - changes the worker's workspace shows outside the phase paths, or did not
+    report. These are compared with a baseline taken when the delegation was
+    recorded, so earlier changes in a shared checkout do not count;
+  - a worker session that never began.
+
+  Claims alone prove nothing.
+- A writer recorded after its host task already began and claimed the phase
+  is accepted when that session is parallel and began after the orchestrator.
+- `cancel`, `collect` and `end` treat a CLI worker as stopped only when its
+  receipt says `exited`. For `unknown` or `foreign`, confirm that it stopped
+  and pass `--confirm-stopped`; `end` leaves such records open.
+- `end` stops the session's CLI workers like other runtimes and cancels their
+  records. It reports host tasks and kept workers as `open_delegations`.
+  `begin` and `status` list them. A session that takes over by solo `begin`
+  inherits them once its state is saved. Any later session adopts the record
+  of an ended orchestrator, together with its kept CLI process, on `collect`
+  or `cancel`.
+
 ## Handover output
 
 `handover [--output FILE]` and `end --handover-output FILE` replace only the

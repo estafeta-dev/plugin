@@ -84,3 +84,18 @@ alone cannot establish it. The runtime earns its cost only if workflow beats lit
 on recovery, ownership safety or integration at equal passed requirements, or
 matches lite at lower cost. If lite matches workflow, the conventions rather than
 the runtime carry the value.
+
+## Cross-provider relay (follow-up)
+
+The golden path tests in `scripts/test_relay.py` catch regressions in the
+relay mechanics; they do not show that cross-provider work pays off. A later
+benchmark should compare, on the frozen scenarios above:
+
+- single-provider work with self-review;
+- the same work with an agent-relay cross-review by another provider;
+- a delegated write phase by another provider.
+
+Measure defects found by independent acceptance tests, review findings that
+were confirmed or rejected, extra tokens and wall time, and how often a
+writer's claims disagreed with recorded facts. Record provider and model for
+each arm, since a result for one pair does not carry over to another.

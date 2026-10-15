@@ -28,6 +28,7 @@ A small isolated edit does not need it.
 | Plan only | Use plan-and-orchestrate. Plan this change without implementing it yet. |
 | Execute | Use plan-and-orchestrate. Complete the agreed phases and verify acceptance. |
 | Economize | Use plan-and-orchestrate with minimal reads and output. |
+| Another provider | Use agent-relay. Have Codex review this diff. |
 | Handover | Use session-handover. Update the handover from actual changes and checks. |
 | End | Use session-end. Save the next action for another device. |
 
@@ -85,6 +86,33 @@ transfer it together with its evidence.
   `other machine` and can be released after confirmation.
 
 Claims depend on cooperation: they do not stop direct edits that bypass the runtime.
+
+## Several AI providers
+
+`agent-relay` lets one chat, the orchestrator, work with agents of other
+providers. Ask for them by name; each run of another provider costs money, and
+the agent needs your request before it starts one.
+
+| Mode | Example | What comes back |
+| --- | --- | --- |
+| Consult | Use agent-relay. Ask Gemini which caching option fits here. | An answer, marked as coming from that model |
+| Review | Use agent-relay. Have Codex review the diff of P2. | APPROVE or CHANGES_REQUIRED with findings |
+| Write | Use agent-relay. Delegate P3 to Claude in its own worktree. | A tested change on a `relay/P3` branch |
+| Peers | Open Codex and Claude on the same project, both "in parallel". | Each claims its own phases |
+
+- **Transports.** The agent prefers the host's own child tasks (for example
+  T3 Code) and otherwise runs the provider's CLI as a supervised process with a
+  timeout. It never uses flags that switch off the worker's sandbox.
+- **Records.** Each delegation is kept under
+  `.agent-state/session-workflow/delegations/`: provider, model, packet and
+  result. `session-start` shows open ones; a later chat collects or cancels
+  them.
+- **Trust.** A worker's report is a claim. For a write, the orchestrator
+  compares it with the runtime's records, reads the diff, commits and merges it
+  itself, and reruns the required checks before DONE.
+- **Models differ.** A provider and model pair that worked once is not
+  validated forever. Start a new pair with a consult or review before giving
+  it a write.
 
 ## Deterministic runtime
 

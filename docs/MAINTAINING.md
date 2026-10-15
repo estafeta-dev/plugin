@@ -13,7 +13,30 @@ python3 scripts/workflow.py sync-contract
 python3 scripts/workflow.py check
 python3 scripts/test_session.py
 python3 scripts/test_workflow.py
+python3 scripts/test_relay.py
 ```
+
+CI (`.github/workflows/ci.yml`) runs the same checks on Linux and macOS for
+every push and pull request.
+
+## Golden paths
+
+`scripts/test_relay.py` plays the scenarios in
+`scripts/golden/relay-scenarios.json`. Each scenario is a sequence of
+orchestrator and worker interactions with an expected result at every step,
+and the first failed step fails the scenario. Keep the set small and
+representative. Add a scenario only for a new interaction pattern, and add a
+failing step when you fix a delegation bug.
+
+- **Every change and CI:** a deterministic stub worker
+  (`scripts/golden/stub_worker.py`) stands in for the LLM. It also plays a
+  hung worker, a garbled reply and a writer that claims checks it never ran.
+- **Before a release, or when a provider, model or adapter changes:** run a
+  scenario live with agent-relay against a disposable fixture. Then run
+  `python3 scripts/test_relay.py --live-verify SCENARIO --root FIXTURE --map
+  orch=<session> --map write-1=<delegation>`, which checks the recorded state
+  read-only. Record the provider, model, date and result in VALIDATION.md.
+  Live runs cost money and need the provider's login, so CI does not run them.
 
 Change `VERSION`, every skill's metadata version, the common contract and the
 three plugin manifests together. Validation rejects version drift. Provider
@@ -42,7 +65,7 @@ python3 scripts/workflow.py bundle --plugin-only --output /path/to/estafeta-plug
 ```
 
 The full archive contains sources, docs, catalogs and the installer. The plugin
-archive contains the manifests, README, cover and five self-contained skills. Both get SHA-256
+archive contains the manifests, README, cover and six self-contained skills. Both get SHA-256
 sidecars. Credentials, project runtime state and Git history are excluded.
 The repository is public. Before publishing new benchmark evidence or logs,
 replace local paths (for example with `$HOME` or `$OUTPUTS`) and remove personal

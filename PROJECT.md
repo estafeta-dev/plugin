@@ -8,7 +8,7 @@ Do not publish credentials, local runtime state, or personal logs.
 
 ## Documentation map
 
-- Plan: none for the current repository synchronization task.
+- Plan: docs/plans/multi-provider.md (multi-provider relay).
 - Handover: HANDOVER.md.
 - Installation: docs/INSTALL.md; usage: docs/USAGE.md.
 - Maintenance and checks: docs/MAINTAINING.md.
@@ -16,8 +16,7 @@ Do not publish credentials, local runtime state, or personal logs.
 
 ## Current focus
 
-- Preserve the favicon studies and make the current source and continuation context available through origin/main.
-- No new product feature is selected. Continue only with the next requested task.
+- Multi-provider relay (3.1.0): skill `agent-relay` and runtime `delegate`; see docs/plans/multi-provider.md.
 - On another computer, follow docs/CONTINUING.md, then use session-start.
 
 ## Run and verify
@@ -28,4 +27,5 @@ Python 3.9+ and Git are required.
 python3 scripts/workflow.py check
 python3 scripts/test_session.py
 python3 scripts/test_workflow.py
+python3 scripts/test_relay.py
 ```

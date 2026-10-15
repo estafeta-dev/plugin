@@ -63,6 +63,7 @@ Then ask any agent: "Use session-guide. Explain how this works."
 | --- | --- |
 | Use session-start | Opening a chat |
 | Use plan-and-orchestrate | Work longer than one step |
+| Use agent-relay | Ask, review with or delegate to another AI provider |
 | Use session-handover | At a milestone |
 | Use session-end | When you stop |
 

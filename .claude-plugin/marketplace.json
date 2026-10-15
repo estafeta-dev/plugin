@@ -1,6 +1,6 @@
 {
   "name": "pashbel-estafeta",
-  "description": "Resumable multi-session projects: checkpoints, phased plans with recorded checks, handovers and safe parallel sessions.",
+  "description": "Resumable multi-session projects: checkpoints, phased plans with recorded checks, handovers, safe parallel sessions and cross-provider delegation.",
   "owner": {
     "name": "pashbel"
   },
@@ -8,7 +8,7 @@
     {
       "name": "estafeta",
       "source": "./packs/session-workflow",
-      "description": "Resumable multi-session projects: checkpoints, phased plans with recorded checks, handovers and safe parallel sessions."
+      "description": "Resumable multi-session projects: checkpoints, phased plans with recorded checks, handovers, safe parallel sessions and cross-provider delegation."
     }
   ]
 }

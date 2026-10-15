@@ -2,7 +2,9 @@
 
 Use native subagents or parallel chats only when the host offers them and the
 user authorized them. No team size is required; sequential work with disclosed
-self-review is always valid.
+self-review is always valid. To consult, review with or delegate to an agent of
+another provider, use the agent-relay skill: it records each delegation and
+checks a writer's claims against the runtime.
 
 - **One integrator** owns the plan, context, handover, integration and Git
   history. Writers never change those shared records.

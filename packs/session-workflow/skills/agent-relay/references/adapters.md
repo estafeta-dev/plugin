@@ -1,0 +1,129 @@
+# Relay adapters
+
+Load only the section for the transport you use. CLI flags change between
+releases: when a command is refused, read that CLI's `--help` and adjust it
+without loosening the sandbox. "Docs" marks commands taken from official
+documentation that estafeta's own tests have not run yet.
+
+## Never by default
+
+These flags remove the worker's sandbox or approvals. Use one only when the
+user explicitly asks for it for this delegation.
+
+| Provider | Forbidden |
+| --- | --- |
+| Codex | `--yolo`, `--dangerously-bypass-approvals-and-sandbox`, `--sandbox danger-full-access`, `--ignore-rules` |
+| Claude Code | `--dangerously-skip-permissions`, `--allow-dangerously-skip-permissions`, `--permission-mode bypassPermissions` |
+| Gemini CLI | `--approval-mode yolo`, `-y`/`--yolo`, `--skip-trust` |
+
+## Host-native tasks
+
+Prefer these when the host offers them: the host owns authentication,
+visibility and cancellation.
+
+- **T3 Code.** `orchestrator_capabilities` lists provider instances, models and
+  whether `canRunCrossProviderChildTask` is true. Launch with `delegate_task`:
+  the packet text as `task`, `target` = `{providerInstanceId, model}`,
+  `mode: "async"`, and the delegation name as `clientRequestId`. For write,
+  add `isolation: "worktree"`. T3 creates the worktree from the last local
+  commit, so record the delegation without `--workspace`. The runtime learns
+  the worker's root when the worker begins its session. Record the returned
+  `taskId` as `--host-ref t3:<taskId>`. Use `task_status` and `task_cancel`
+  to follow and stop it. For a new review round, start a new `delegate_task`
+  with the earlier findings and replies, under a new delegation name.
+- **Same-provider subagents** (Claude Code Agent tool, Codex subagents): use
+  them when only another model or a fresh context is needed. Record them as
+  host tasks with the subagent's ID as `--host-ref`.
+
+## CLI workers
+
+Run through `delegate start ... -- <argv>`. The runtime replaces
+`{packet_text}`, `{packet}`, `{reply_file}`, `{workspace}` and `{state_dir}`.
+The worker gets no shell and no stdin, and its working directory is
+`--workspace`. Always pass `--timeout`. Pass the same model to the CLI that you
+record with `--model`; the runtime cannot see which model actually ran.
+
+`collect` reads `{reply_file}` first, then the worker's stdout. Stderr is kept
+apart in `stderr.log` because it carries progress and tool output. In JSON
+output, only final-answer fields count: Claude's `result`, Gemini's
+`response`, and Codex's `agent_message` items. A block quoted inside tool
+output is ignored.
+
+A writer must write the shared state directory to record its session, claims
+and checks. Grant exactly that directory (`{state_dir}`) in addition to its
+workspace. Do not grant the repository's `.git`: the integrator commits.
+
+### Codex (`codex exec`), docs
+
+| Mode | argv after `--` |
+| --- | --- |
+| consult, review | `codex exec --sandbox read-only --cd {workspace} --output-last-message {reply_file} -m MODEL {packet_text}` |
+| write | `codex exec --sandbox workspace-write --add-dir {state_dir} --cd {workspace} --output-last-message {reply_file} -m MODEL {packet_text}` |
+
+- Reasoning effort: `-c model_reasoning_effort="high"`.
+- Codex needs a Git checkout and an existing `codex login` or `CODEX_API_KEY`.
+- It reads AGENTS.md and finds skills in `.agents/skills` and `~/.agents/skills`.
+
+### Claude Code (`claude -p`), verified live
+
+| Mode | argv after `--` |
+| --- | --- |
+| consult, review | `claude -p {packet_text} --permission-mode dontAsk --tools Read,Grep,Glob --output-format json --model MODEL --max-budget-usd N` |
+| write | `claude -p {packet_text} --permission-mode acceptEdits --settings SANDBOX --output-format json --model MODEL --max-budget-usd N` |
+
+SANDBOX is one argv item:
+
+```json
+{"sandbox": {"enabled": true, "failIfUnavailable": true, "allowUnsandboxedCommands": false, "filesystem": {"allowWrite": ["{state_dir}"]}}}
+```
+
+- **The OS sandbox is the boundary.** It confines Bash and every process Bash
+  starts, and sandboxed commands run without prompts.
+  - Writes are allowed only to the workspace, the temp directory and
+    `{state_dir}`. A linked worktree also gets its shared `.git`.
+  - Permission rules such as `Bash(python3:*)` are not a filesystem boundary,
+    so do not use them for writers.
+  - File tools follow `acceptEdits` and can write only inside the workspace.
+- **When the sandbox fails.** `failIfUnavailable` makes the worker exit on
+  native Windows or without the sandbox dependencies; prefer a host task
+  there.
+- **What `collect` can see.** It reports changes outside the phase paths
+  inside the worktree, but not writes elsewhere.
+- **Placement.** Put `{packet_text}` right after `-p`: `--tools` and
+  `--add-dir` take several values and would swallow a trailing prompt.
+- **Cost and denials.** The JSON reply has `result`, `session_id`, `usage`,
+  `total_cost_usd` and `permission_denials`. `collect` finds the block in
+  `result`.
+- **Avoid `--bare` and `-w`.** `--bare` turns off CLAUDE.md and skills; with
+  `-w` Claude would make its own worktree.
+- **Nesting.** A worker started from inside a Claude Code session ran without
+  changes in 2.1.300.
+- Do not use `--bare`: it turns off CLAUDE.md and skills.
+- Do not use `-w`: the runtime already chose the workspace.
+- The JSON reply has `result`, `session_id`, `usage` and `total_cost_usd`;
+  `collect` finds the block inside `result`.
+
+### Gemini CLI (`gemini -p`), docs
+
+| Mode | argv after `--` |
+| --- | --- |
+| consult, review | `gemini -m MODEL -p {packet_text} --output-format json --approval-mode plan` |
+| write | `gemini -m MODEL -p {packet_text} --output-format json --approval-mode auto_edit --include-directories {state_dir}` |
+
+- Since June 2026, personal Google accounts use Antigravity instead. Gemini
+  CLI keeps working with paid Gemini API, Vertex or enterprise keys.
+- Headless shell approval and folder trust for a fresh worktree are
+  unverified. Prefer a host-native task (for example T3's Antigravity
+  provider) for Gemini writers.
+- Exit codes: 1 means an error, 42 bad input, 53 the turn limit.
+
+## Resuming a worker
+
+A follow-up round, such as "resend only the block" or a fix delta, goes to the
+same worker session when the transport supports it:
+
+- `codex exec resume <id> ...`;
+- `claude -p --resume <session_id> ...`;
+- a new T3 task carrying the earlier exchange.
+
+Record every round as a new delegation name.
