@@ -1,0 +1,32 @@
+{
+  "brand": "estafeta",
+  "accent": "#FF30B3",
+  "background": "#101012",
+  "recommended": "01-spark",
+  "concepts": [
+    {
+      "id": "01-spark",
+      "name": "Искра",
+      "idea": "Асимметричная вспышка, восемь лучей."
+    },
+    {
+      "id": "02-handoff",
+      "name": "Передача",
+      "idea": "Две смещённые эстафетные палочки."
+    },
+    {
+      "id": "03-monogram",
+      "name": "e + искра",
+      "idea": "Nuosu SIL и розовая вспышка."
+    }
+  ],
+  "exportSizes": [
+    16,
+    24,
+    32,
+    48,
+    64,
+    180,
+    512
+  ]
+}
