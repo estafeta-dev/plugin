@@ -5,6 +5,46 @@ releases: when a command is refused, read that CLI's `--help` and adjust it
 without loosening the sandbox. "Docs" marks commands taken from official
 documentation that estafeta's own tests have not run yet.
 
+## Orchestrator hosts
+
+The orchestrator can run in any host that has a shell and the estafeta skills.
+The cases below were verified live with `scripts/golden/live_orchestrator.py`,
+the consult golden path, and `--live-verify`.
+
+| Orchestrator | Worker | Transport | Verified |
+| --- | --- | --- | --- |
+| T3 Code (any provider) | Codex, Antigravity (Gemini) | T3 `delegate_task` | consult, review, write |
+| Claude Code | Codex | `codex exec` | consult |
+| Claude Code | Claude subagent | Agent tool, recorded as host | consult |
+| Codex | Claude | `claude -p` | consult |
+| Codex | Codex subagent | `multi_agent`, recorded as host | consult |
+| any shell host | Claude, Codex | `claude -p`, `codex exec` | consult and write (`live_cli.py`) |
+
+What each host needs:
+
+- **Shell commands.** The orchestrator must run the runtime and the worker
+  CLI.
+  - **Claude Code:** allow Bash, either through your permission mode or with
+    `--allowedTools Bash` headless.
+  - **Codex:** its sandbox applies to everything it starts, including the
+    supervised worker. A nested CLI needs the network and write access to its
+    own config directory (`~/.claude` or `CLAUDE_CONFIG_DIR`, `~/.codex`).
+    The verified setting was `--sandbox workspace-write -c
+    sandbox_workspace_write.network_access=true` with `--add-dir` for those
+    directories. Without network, a nested CLI cannot reach its API (not run
+    live). A Codex orchestrator that cannot get these permissions should use
+    its native subagents or a host such as T3.
+- **Native subagents.** They do not run under the runtime, so record them as
+  host tasks: `--host-ref` is the subagent's name or path, and `--model` is
+  the model it ran, or the orchestrator's own when the host does not say.
+  Save its final message to `reply_file`, then collect.
+- **Skill copies.** Several copies can coexist: global per provider, project
+  `.claude/skills` and `.agents/skills`. An older global copy can shadow a
+  newer one. Seen live: Claude Code ran a global 2.4.1 `session-end`, which
+  refused the newer state without changing it. Keep installs current with
+  `python3 scripts/workflow.py install --all-detected`. The runtime's
+  `version` error names the cause.
+
 ## Never by default
 
 These flags remove the worker's sandbox or approvals. Use one only when the

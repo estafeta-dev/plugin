@@ -64,7 +64,8 @@ integrator: workers never change the plan, handover or Git history.
      MODE --packet F [--phase P --worker-session W --workspace DIR]
      --timeout S -- <adapter argv>`.
    - Host: launch the host task with the packet text, then record it at once
-     with `delegate start ... --host-ref <task id>`. A fast writer may already
+     with `delegate start ... --host-ref <task id>`. Always pass `--model`;
+     for a native subagent that names no model, record the orchestrator's. A fast writer may already
      have begun and claimed its phase; the runtime accepts that. If recording
      fails for another reason, cancel the host task.
 6. **Wait without busy polling.** Host tasks notify; for a CLI worker, check

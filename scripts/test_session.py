@@ -375,6 +375,18 @@ class SessionTests(unittest.TestCase):
         self.call(*start, "--model", "gpt-6.1-sol")
         self.assertEqual(r.relay_load(self.store, "q")["model"], "gpt-6.1-sol")
 
+    def test_newer_state_tells_an_outdated_copy_how_to_update(self):
+        self.setup_sessions()
+        value = json.loads(self.store.path.read_text())
+        value["schema_version"] = 99
+        self.store.path.write_text(json.dumps(value))
+        error = self.call("status", code=2)["error"]
+        self.assertEqual(error["code"], "version")
+        self.assertIn("newer estafeta", error["message"])
+        self.assertIn("install --all-detected", error["message"])
+        value["schema_version"] = 2
+        self.store.path.write_text(json.dumps(value))
+
     # Snapshots and startup
 
     def test_snapshot_is_read_only_and_tracks_dirty_and_staged_content(self):

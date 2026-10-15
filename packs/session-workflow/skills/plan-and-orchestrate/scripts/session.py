@@ -677,7 +677,12 @@ class Store:
             raise Problem("path", "State must not be a symlink")
         state = read_json(self.path)
         if not isinstance(state, dict) or state.get("schema_version") not in (1, SCHEMA_VERSION):
-            raise Problem("version", "Unsupported state schema; it was not modified")
+            found = state.get("schema_version") if isinstance(state, dict) else None
+            newer = isinstance(found, int) and found > SCHEMA_VERSION
+            raise Problem("version", "Unsupported state schema; it was not modified." + (
+                f" It was written by a newer estafeta (schema {found}); this copy of the skill is outdated, often "
+                "an older global install shadowing a newer one. Use the newest installed copy, or update all "
+                "installs: python3 scripts/workflow.py install --all-detected" if newer else ""))
         if state["schema_version"] == 1:
             state, self.migration = migrate_v1(state, self)
         validate(state, "state")

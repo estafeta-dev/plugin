@@ -20,6 +20,24 @@ stderr. `delegate` records the worker as exited and the result as
 CLI answer needs a paid API key, which this host does not have; Gemini models
 are verified through Antigravity instead.
 
+**Orchestrators outside T3.** A real orchestrator agent received a plain user
+request ("consult X with agent-relay") in a fixture with project-local skills
+and an AI providers table. It ran session-start, delegate start, collect and
+session-end itself. The run was checked with `--live-verify consult-cli`
+(`scripts/golden/live_orchestrator.py`).
+
+| Orchestrator | Worker | Result |
+| --- | --- | --- |
+| Claude Code `claude -p`, sonnet-5.5 | Codex via `codex exec` | PASS: 13 turns, $0.19 |
+| Codex `codex exec`, gpt-6.1-sol, workspace-write with network | Claude via `claude -p`, haiku-5.5 | PASS |
+| Claude Code, sonnet-5.5 | its Agent tool subagent (haiku), recorded as host | PASS: $0.21 |
+| Codex, gpt-6.1-sol | its `multi_agent` subagent, recorded as host | PASS: the model was not recorded, so the skill now requires `--model` |
+
+In the first run, Claude Code used the user's outdated global 2.4.1
+`session-end`, which refused the newer state untouched. The agent recovered
+with the project's runtime, and the `version` error now explains this
+shadowing.
+
 Observations from these runs, now in the adapters:
 
 - **Codex.** The user's `~/.codex/config.toml` defaulted to
