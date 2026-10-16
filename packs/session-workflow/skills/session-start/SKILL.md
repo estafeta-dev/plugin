@@ -39,11 +39,21 @@ Read the [contract](references/workflow-contract.md) and
 4. **Bootstrap only what is missing.** That means PROJECT.md from the
    [template](templates/project-context.md) plus a two-line pointer in
    AGENTS.md or CLAUDE.md.
-5. **Report briefly:**
+5. **Ask about AI providers on first use.** If the result says
+   `provider_policy: missing`, ask the user once, in one question, which AI
+   providers this project may use and for what. Offer:
+   - this agent;
+   - the CLIs that `delegate providers` finds;
+   - the host's own subagents or cross-provider tasks.
+
+   "Only this agent" is a valid answer. Record the answer as the AI providers
+   table in PROJECT.md (template section), keeping its markers. If the result
+   says `invalid`, fix the markers. Never add a provider without the user.
+6. **Report briefly:**
    - current phase, drift or gaps and next action;
    - superseded and other active sessions;
    - `warnings`, for example proposed .gitignore entries.
-6. **Continue** the task the user asked for. Without a task, propose the saved
+7. **Continue** the task the user asked for. Without a task, propose the saved
    next action and wait.
 
 If another active session holds claims you need, take unclaimed work. Release

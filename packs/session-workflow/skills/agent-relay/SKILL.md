@@ -33,9 +33,15 @@ integrator: workers never change the plan, handover or Git history.
 
 ## Delegate
 
-1. **Authorize.** Running another provider is a paid background run. Proceed
-   only when the user asked for that provider or mode in this conversation.
-   Never put secrets in a packet.
+1. **Authorize.**
+   - **The project table.** The AI providers table in PROJECT.md is the
+     user's standing choice of providers, modes and models for this project,
+     and the runtime refuses anything outside it. If it is missing, ask the
+     user and record it first (session-start, step 5). Change it only when
+     the user asks.
+   - **Cost.** Each run of another provider still costs money: follow the
+     user's request for this task and say what you start.
+   - **Secrets.** Never put secrets in a packet.
 2. **Pick the transport** (details and exact commands: [adapters](references/adapters.md)):
    1. a host-native cross-provider task, if this host offers one;
    2. otherwise the provider's CLI (`delegate providers` lists them);
@@ -58,7 +64,8 @@ integrator: workers never change the plan, handover or Git history.
      MODE --packet F [--phase P --worker-session W --workspace DIR]
      --timeout S -- <adapter argv>`.
    - Host: launch the host task with the packet text, then record it at once
-     with `delegate start ... --host-ref <task id>`. A fast writer may already
+     with `delegate start ... --host-ref <task id>`. Always pass `--model`;
+     for a native subagent that names no model, record the orchestrator's. A fast writer may already
      have begun and claimed its phase; the runtime accepts that. If recording
      fails for another reason, cancel the host task.
 6. **Wait without busy polling.** Host tasks notify; for a CLI worker, check

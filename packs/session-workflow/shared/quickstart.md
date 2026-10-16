@@ -65,5 +65,7 @@ To finish a phase, batch these steps:
 | `stale_revision` | `status`, reconcile, retry with the new revision |
 | `busy` | The lock was held for 10 seconds: retry once, then report |
 | `handover_after_end` | The session already ended: fix the file, rerun only `handover --output` |
+| `provider_policy: missing` | First use: ask the user which AI providers this project allows and record the PROJECT.md table (session-start step 5) |
+| `providers_unset`, `provider_not_allowed` | Delegation outside the project's AI providers table: ask the user; never edit the table on your own |
 | Stopped session holds claims | After the user confirms it is gone: `release --session OLD --expect-revision R --confirm-stopped --reason "..." --by ID` |
 | Interrupted check stays `running` | After verifying it stopped: `check abandon --session ID --id CHECK --confirm-stopped --evidence "..."` |

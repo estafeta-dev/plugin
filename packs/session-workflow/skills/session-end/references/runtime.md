@@ -41,8 +41,20 @@ from its own machine and path; elsewhere it gets `session_foreign`.
 
 Solo `begin`, the default, ends earlier sessions recorded in this checkout, or
 in a checkout path that no longer exists on this machine. It moves their claims
-and runtimes to the new session. A session that is still running a check blocks
-this with `session_alive`.
+and runtimes to the new session, and their open delegations once the state is
+saved. A session that is still running a check blocks this with
+`session_alive`.
+
+A session in this checkout that acted within
+`SESSION_WORKFLOW_TAKEOVER_IDLE_MINUTES` (default 30), or that has open
+delegations, may belong to a live thread. A solo `begin` then joins in
+parallel, takes over nothing and warns.
+
+Activity is measured from the runtime's own records:
+
+- the session's begin and checkpoints;
+- its events and checks;
+- its delegations.
 
 `begin --parallel` puts the checkout in parallel mode, which marks every
 active session there as parallel. While any parallel session is active in a
@@ -116,13 +128,22 @@ recorded PID. On Windows the supervisor ends the process tree through
 
 | Command | Purpose |
 | --- | --- |
-| `delegate providers` | Read-only: provider CLIs on PATH and their versions |
+| `delegate providers` | Read-only: provider CLIs on PATH, their versions and the project's AI providers table |
 | `delegate start --session ID --name N --provider P --mode consult\|review\|write --packet F [--model M] [--phase P --worker-session W] [--workspace DIR] [--timeout S] -- CMD...` | Record a delegation and run a CLI worker as a supervised runtime `relay-N` |
 | `delegate start ... --host-ref REF` (no command) | Record a host-native child task, such as a T3 task ID |
 | `delegate status [--session ID] [--name N]` | Read-only: records, worker runtime, writer facts and result |
 | `delegate collect --session ID --name N [--from FILE] [--confirm-stopped]` | Parse the worker's final RELAY-RESULT block from `--from`, `reply.txt` or the CLI worker's stdout |
 | `delegate cancel --session ID --name N [--confirm-stopped]` | Stop a CLI worker, or close a host task you already cancelled |
 
+- **Provider policy.** `delegate start` requires the marked AI providers table
+  in the context document (PROJECT.md), between
+  `<!-- estafeta:providers:start -->` and `<!-- estafeta:providers:end -->`.
+  - Each row gives the provider ID, its allowed modes (`consult`, `review`,
+    `write`, plus the informational `orchestrate`, or `none`) and its models
+    (`any` or IDs).
+  - Without the table the error is `providers_unset`, and `status`/`begin`
+    report `provider_policy: missing`. A provider, mode or model outside it
+    gives `provider_not_allowed`.
 - Records live in `delegations/<name>/` under the state directory: the packet,
   `record.json` and `result.json` with SHA-256 hashes. `state.json` and its
   schema do not change, so a 3.0 runtime can still take part as a worker.

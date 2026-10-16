@@ -508,7 +508,12 @@ def scope_inventory(store, state, p):
             raise Problem("too_large", f"{len(hashable)} changed or untracked files in the phase scope; add "
                           "generated directories to .gitignore or narrow the phase paths", 6)
         for name, sha in zip(hashable, blob_hashes(root, hashable)):
-            inventory[name] = ("100755" if os.access(root / name, os.X_OK) else "100644") + ":" + sha
+            if os.name == "nt":
+                # Windows reports every file as executable and Git there ignores file modes: keep the index mode.
+                mode = inventory[name].split(":")[0] if name in inventory else "100644"
+            else:
+                mode = "100755" if os.access(root / name, os.X_OK) else "100644"
+            inventory[name] = mode + ":" + sha
     else:
         patterns, names = ignore_patterns(root), []
         for value in (["*"] if whole else p["paths"]):
@@ -672,7 +677,12 @@ class Store:
             raise Problem("path", "State must not be a symlink")
         state = read_json(self.path)
         if not isinstance(state, dict) or state.get("schema_version") not in (1, SCHEMA_VERSION):
-            raise Problem("version", "Unsupported state schema; it was not modified")
+            found = state.get("schema_version") if isinstance(state, dict) else None
+            newer = isinstance(found, int) and found > SCHEMA_VERSION
+            raise Problem("version", "Unsupported state schema; it was not modified." + (
+                f" It was written by a newer estafeta (schema {found}); this copy of the skill is outdated, often "
+                "an older global install shadowing a newer one. Use the newest installed copy, or update all "
+                "installs: python3 scripts/workflow.py install --all-detected" if newer else ""))
         if state["schema_version"] == 1:
             state, self.migration = migrate_v1(state, self)
         validate(state, "state")
@@ -781,6 +791,11 @@ def brief(state, store, session_id=None, live=None):
               "live_workspace": compact_snapshot(live) if live is not None else None}
     if actor and actor["status"] != "active":
         result["session_status"] = "ended: " + actor["ended_reason"]
+    try:
+        if provider_policy(store, state) is None:
+            result["provider_policy"] = "missing"
+    except Problem:
+        result["provider_policy"] = "invalid"
     delegations = relay_open(store)
     if delegations:
         result["open_delegations"] = [{"name": r["name"], "provider": r["provider"], "mode": r["mode"],
@@ -867,6 +882,42 @@ def prior_checkpoint(state, store):
     return best
 
 
+def parse_time(value):
+    try:
+        return datetime.fromisoformat(value).timestamp()
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def last_activity(store, state, session_id):
+    """Latest moment the runtime saw this session act: begin, checkpoints, its events, checks and delegations."""
+    s = state["sessions"][session_id]
+    times = [parse_time(s["started_at"]), parse_time((s.get("checkpoint") or {}).get("at"))]
+    runs = {c["id"] for c in state["checks"].values() if c["session_id"] == session_id}
+    for event in state["events"]:
+        target = event.get("event", "").split(":", 1)[-1]
+        if target == session_id or target in runs:
+            times.append(parse_time(event.get("at")))
+    for record in relay_records(store):
+        if record["session_id"] == session_id:
+            times += [parse_time(record.get("started_at")), parse_time(record.get("finished_at"))]
+    return max(times)
+
+
+def takeover_blockers(store, state, candidates):
+    """Sessions a solo begin must not take over: recently active ones, or those with open delegations."""
+    idle = 60 * float(os.environ.get("SESSION_WORKFLOW_TAKEOVER_IDLE_MINUTES", "30"))
+    delegating = {r["session_id"] for r in relay_open(store)}
+    blockers = []
+    for sid in candidates:
+        quiet = time.time() - last_activity(store, state, sid)
+        if sid in delegating:
+            blockers.append(f"{sid} has open delegations")
+        elif quiet < idle:
+            blockers.append(f"{sid} was active {int(quiet // 60)} min ago")
+    return blockers
+
+
 def begin(store, args):
     with file_lock(store.directory / ".lock"):
         state = store.load() if store.path.exists() else initial_state(store, args)
@@ -882,6 +933,14 @@ def begin(store, args):
         # been released: nobody here is taken over, and new sessions join instead of superseding.
         parallel_here = [sid for sid in here if state["sessions"][sid]["parallel"]]
         joined = bool(parallel_here) and not args.parallel
+        # Another thread or agent may still be working here (T3 runs several threads in one folder):
+        # a solo begin does not take over a recently active session; it joins in parallel instead.
+        guarded = [] if args.parallel or joined else takeover_blockers(
+            store, state, [sid for sid in here if live_checks(store, state, sid) == []])
+        if guarded:
+            joined = True
+            for sid in here:
+                state["sessions"][sid]["parallel"] = True
         if args.parallel:
             for sid in here:
                 state["sessions"][sid]["parallel"] = True
@@ -909,7 +968,12 @@ def begin(store, args):
         result = brief(state, store, session_id, live)
         if superseded:
             result["superseded"] = superseded
-        if joined:
+        if guarded:
+            result["warnings"] = result.get("warnings", []) + [
+                "Another session here may still be working (" + "; ".join(guarded) + "), so this session joined "
+                "in parallel and took over nothing. Claim paths no one else claims. If that chat has stopped, "
+                "confirm with the user and release it."]
+        elif joined:
             result["warnings"] = result.get("warnings", []) + [
                 "Parallel work is in progress in this checkout (" + ", ".join(parallel_here) + "); this session "
                 "joined it and took over nothing. Claim paths no one else claims; release a session only after "
@@ -1035,10 +1099,68 @@ def group_alive(pgid):
         return True
 
 
-def terminate_group(child, grace=4.0):
+class WindowsJob:
+    """A Windows Job Object: the counterpart of a POSIX process group for descendants of one child."""
+
+    def __init__(self, pid):
+        import ctypes
+        from ctypes import wintypes
+        self.ctypes, self.wintypes = ctypes, wintypes
+        self.kernel = k = ctypes.WinDLL("kernel32", use_last_error=True)
+        signatures = {
+            "CreateJobObjectW": ([wintypes.LPVOID, wintypes.LPCWSTR], wintypes.HANDLE),
+            "OpenProcess": ([wintypes.DWORD, wintypes.BOOL, wintypes.DWORD], wintypes.HANDLE),
+            "AssignProcessToJobObject": ([wintypes.HANDLE, wintypes.HANDLE], wintypes.BOOL),
+            "QueryInformationJobObject": ([wintypes.HANDLE, ctypes.c_int, wintypes.LPVOID, wintypes.DWORD,
+                                           ctypes.POINTER(wintypes.DWORD)], wintypes.BOOL),
+            "TerminateJobObject": ([wintypes.HANDLE, wintypes.UINT], wintypes.BOOL),
+            "CloseHandle": ([wintypes.HANDLE], wintypes.BOOL),
+        }
+        for name, (args, result) in signatures.items():
+            getattr(k, name).argtypes, getattr(k, name).restype = args, result
+        self.handle = self.kernel.CreateJobObjectW(None, None)
+        process = self.kernel.OpenProcess(0x0101, False, pid)  # PROCESS_TERMINATE | PROCESS_SET_QUOTA
+        try:
+            if not self.handle or not process or not self.kernel.AssignProcessToJobObject(self.handle, process):
+                raise OSError(ctypes.get_last_error(), "Cannot assign the process to a job object")
+        finally:
+            if process:
+                self.kernel.CloseHandle(process)
+
+    def active(self):
+        ctypes, wintypes = self.ctypes, self.wintypes
+
+        class Accounting(ctypes.Structure):
+            _fields_ = [("user", ctypes.c_int64), ("kernel", ctypes.c_int64), ("period_user", ctypes.c_int64),
+                        ("period_kernel", ctypes.c_int64), ("page_faults", wintypes.DWORD),
+                        ("total", wintypes.DWORD), ("active", wintypes.DWORD), ("terminated", wintypes.DWORD)]
+        info = Accounting()
+        if not self.kernel.QueryInformationJobObject(self.handle, 1, ctypes.byref(info), ctypes.sizeof(info), None):
+            return 0
+        return info.active
+
+    def terminate(self):
+        self.kernel.TerminateJobObject(self.handle, 1)
+
+
+def terminate_group(child, grace=4.0, job=None):
     """Stop the direct child and every descendant in the process group it leads."""
     if os.name == "nt":
-        if child.poll() is None:
+        # Ask the group to stop first: CTRL_BREAK reaches every process in it, and a running check records
+        # itself as abandoned. Then force whatever remains: the whole job, or the tree under a live leader.
+        def alive():
+            return child.poll() is None or (job is not None and job.active() > 0)
+        if alive():
+            try:
+                os.kill(child.pid, signal.CTRL_BREAK_EVENT)
+            except OSError:
+                pass
+            deadline = time.monotonic() + grace
+            while alive() and time.monotonic() < deadline:
+                time.sleep(0.1)
+        if job is not None and job.active() > 0:
+            job.terminate()
+        elif child.poll() is None:
             subprocess.run(["taskkill", "/T", "/F", "/PID", str(child.pid)], capture_output=True)
         return
     try:
@@ -1065,10 +1187,30 @@ class Interrupted(Exception):
     pass
 
 
+STOP_FILE = "SESSION_WORKFLOW_STOP_FILE"
+
+
+def wait_for_check(child, timeout):
+    """Wait like Popen.wait, but also stop when the supervisor of an enclosing worker asks for it.
+
+    Signals cannot reach a check started by a worker everywhere (a Windows process without a console gets no
+    CTRL_BREAK), so the supervisor also writes the file named in SESSION_WORKFLOW_STOP_FILE.
+    """
+    stop_file, deadline = os.environ.get(STOP_FILE), time.monotonic() + timeout
+    while True:
+        try:
+            return child.wait(timeout=min(0.2, max(0.0, deadline - time.monotonic())))
+        except subprocess.TimeoutExpired:
+            if stop_file and os.path.exists(stop_file):
+                raise Interrupted()
+            if time.monotonic() >= deadline:
+                raise
+
+
 @contextmanager
 def interrupt_guard():
     """Turn SIGTERM/SIGHUP into Interrupted while a check runs, so its separate process group is not orphaned."""
-    names = [n for n in ("SIGTERM", "SIGHUP") if hasattr(signal, n)]
+    names = [n for n in ("SIGTERM", "SIGHUP", "SIGBREAK") if hasattr(signal, n)]
     if threading.current_thread() is not threading.main_thread():
         yield
         return
@@ -1092,7 +1234,7 @@ def run_check(store, state, p, args, run_id, command, before):
                                      stdin=subprocess.DEVNULL, shell=False, **group_kwargs())
             try:
                 with interrupt_guard():
-                    code = child.wait(timeout=args.timeout)
+                    code = wait_for_check(child, args.timeout)
                 outcome = "pass" if code == 0 else "fail"
             except subprocess.TimeoutExpired:
                 terminate_group(child)
@@ -1162,6 +1304,14 @@ def stop_runtime(store, record):
     return {"status": "unknown", "reason": "Stop receipt unavailable; process was not killed by PID"}
 
 
+def request_stop(stop_request, running, grace):
+    """Tell nested check runners to stop their checks before any signal: they record the run as abandoned."""
+    atomic_write(stop_request, "stop\n")
+    deadline = time.monotonic() + min(3.0, grace / 2)
+    while running() and time.monotonic() < deadline:
+        time.sleep(0.1)
+
+
 def supervise(spec_path):
     """Private supervisor: owns one process group through a live Popen handle; accepts no PID."""
     spec_path = Path(spec_path).resolve()
@@ -1170,25 +1320,41 @@ def supervise(spec_path):
     receipt_path = directory / "receipt.json"
     try:
         # A delegated worker's stderr (progress, tool output) stays apart from its final answer on stdout.
+        stop_request = directory / "stop-request"
         with open(directory / "output.log", "ab") as output, \
                 open(directory / spec.get("stderr", "output.log"), "ab") as errors:
             child = subprocess.Popen(spec["argv"], cwd=spec["root"], stdout=output,
                                      stderr=errors if spec.get("stderr") else subprocess.STDOUT,
-                                     stdin=subprocess.DEVNULL, shell=False, **group_kwargs())
+                                     stdin=subprocess.DEVNULL, shell=False,
+                                     env={**os.environ, STOP_FILE: str(stop_request)}, **group_kwargs())
             stop, beat = directory / "stop.json", 0.0
             started, limit, timed_out = time.monotonic(), spec.get("timeout"), False
-            # Descendants keep the group alive after the leader exits; supervise until all are gone.
-            while child.poll() is None or group_alive(child.pid):
+            job = None
+            if os.name == "nt":
+                try:
+                    job = WindowsJob(child.pid)
+                except OSError:
+                    job = None  # Fall back to the leader and taskkill /T
+
+            def running():
+                if os.name == "nt":
+                    return child.poll() is None or (job is not None and job.active() > 0)
+                # Descendants keep the group alive after the leader exits.
+                return child.poll() is None or group_alive(child.pid)
+            # Supervise until the leader and all of its descendants are gone.
+            while running():
                 if time.monotonic() - beat >= HEARTBEAT_SECONDS:
                     atomic_write(receipt_path, canonical({"run_id": spec["run_id"], "status": "running",
                                  "heartbeat": time.time(), "pid": child.pid,
                                  "leader_exited": child.returncode is not None}) + "\n", durable=False)
                     beat = time.monotonic()
                 if stop.exists() and read_json(stop).get("run_id") == spec["run_id"]:
-                    terminate_group(child, spec.get("grace", 4.0))
+                    request_stop(stop_request, running, spec.get("grace", 4.0))
+                    terminate_group(child, spec.get("grace", 4.0), job)
                     break
                 if limit and time.monotonic() - started > limit:
-                    terminate_group(child, spec.get("grace", 4.0))
+                    request_stop(stop_request, running, spec.get("grace", 4.0))
+                    terminate_group(child, spec.get("grace", 4.0), job)
                     timed_out = True
                     break
                 time.sleep(0.2)
@@ -1314,6 +1480,50 @@ def relay_runtime(store, state, record):
     return runtime_view(store, process) if process else {"status": "unknown", "reason": "No runtime record"}
 
 
+POLICY_BEGIN, POLICY_END = "<!-- estafeta:providers:start -->", "<!-- estafeta:providers:end -->"
+RELAY_MODES = ("consult", "review", "write")
+
+
+def provider_policy(store, state=None):
+    """The project's AI providers table from the context document, or None when the user has not decided yet."""
+    name = (state or {}).get("documents", {}).get("context") or "PROJECT.md"
+    path = relative_path(store.root, name)
+    if not path.is_file():
+        return None
+    text = path.read_text(encoding="utf-8")
+    if POLICY_BEGIN not in text and POLICY_END not in text:
+        return None
+    if text.count(POLICY_BEGIN) != 1 or text.count(POLICY_END) != 1 or text.index(POLICY_BEGIN) > text.index(POLICY_END):
+        raise Problem("providers_invalid", f"Ambiguous AI providers markers in {name}; keep exactly one block", 3)
+    providers = {}
+    for line in text[text.index(POLICY_BEGIN) + len(POLICY_BEGIN):text.index(POLICY_END)].splitlines():
+        cells = [c.strip().strip("`").strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 2 or not cells[0] or cells[0].lower() == "provider" or set(cells[0]) <= set("-: "):
+            continue
+        uses = {u for u in re.split(r"[,;\s]+", cells[1].lower()) if u}
+        models = [m for m in re.split(r"[,;\s]+", cells[2]) if m] if len(cells) > 2 else []
+        providers[cells[0].lower()] = {
+            "modes": [m for m in RELAY_MODES if m in uses], "orchestrate": "orchestrate" in uses,
+            "models": [] if not models or models[0].lower() in ("any", "*", "-") else models}
+    return {"file": name, "providers": providers}
+
+
+def check_policy(store, state, provider, mode, model):
+    policy = provider_policy(store, state)
+    if policy is None:
+        raise Problem("providers_unset", "This project has no AI providers table yet. Ask the user which providers, "
+                      "modes and models this project allows, record them in PROJECT.md (agent-relay, step 1), then "
+                      "retry", 3)
+    entry = policy["providers"].get(provider.lower())
+    if entry is None or mode not in entry["modes"]:
+        allowed = ", ".join(f"{p}: {'/'.join(e['modes']) or 'none'}" for p, e in sorted(policy["providers"].items()))
+        raise Problem("provider_not_allowed", f"{policy['file']} does not allow {provider} for {mode} "
+                      f"(allowed: {allowed or 'no providers'}). Ask the user before changing the table", 3)
+    if entry["models"] and model not in entry["models"]:
+        raise Problem("provider_not_allowed", f"{policy['file']} allows {provider} only with "
+                      f"{', '.join(entry['models'])}; pass one of them with --model", 3)
+
+
 def relay_providers():
     found = []
     for name in PROVIDER_CLIS:
@@ -1340,6 +1550,7 @@ def relay_start(store, state, args):
     cli = args.inline is not None or bool(args.argv_file)
     if relay_dir(store, name).exists():
         raise Problem("delegation", "Delegation name already used; choose a new name", 3)
+    check_policy(store, state, args.provider, mode, args.model or "")
     packet = Path(require(args.packet, "--packet")).expanduser()
     text = packet.read_text(encoding="utf-8")
     if not text.strip():
@@ -1662,7 +1873,19 @@ def relay_collect(store, state, args):
                 used = str(source)
                 break
     if body is None:
-        record.update(status="malformed", error="No " + RELAY_OPEN + " ... " + RELAY_CLOSE + " block in the final answer")
+        error = "No " + RELAY_OPEN + " ... " + RELAY_CLOSE + " block in the final answer"
+        if record["transport"] == "cli" and not args.from_file:
+            # Diagnose a CLI that failed before answering, such as missing authentication.
+            runtime = relay_runtime(store, state, record)
+            _, process = relay_process(state, record)
+            tail = ""
+            log = relay_path(store, process["directory"]) / "stderr.log" if process else None
+            if log and log.is_file():
+                with open(log, "rb") as handle:
+                    handle.seek(max(0, log.stat().st_size - 600))
+                    tail = " ".join(handle.read().decode("utf-8", "replace").split())
+            error += f"; worker exit code {runtime.get('exit_code')}" + (f"; stderr ends: {tail}" if tail else "")
+        record.update(status="malformed", error=error)
         relay_save(store, record)
         return relay_view(store, state, record), adopted
     try:
@@ -2150,7 +2373,12 @@ def dispatch(store, args):
     if args.inline is not None and not accepts_command:
         raise Problem("arguments", "Only 'check run', 'runtime launch' and 'delegate start' accept a command after --")
     if command == "delegate" and args.action == "providers":
-        return None, relay_providers()
+        found = relay_providers()
+        try:
+            found["policy"] = provider_policy(store, store.load() if store.path.exists() else None)
+        except Problem as exc:
+            found["policy"] = {"error": str(exc)}
+        return None, found
     if command == "delegate" and args.action != "status":
         require(args.session, "--session")
     if command == "snapshot":

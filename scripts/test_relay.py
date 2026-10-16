@@ -14,6 +14,7 @@ scenario's session and delegation IDs by the live ones.
 import argparse
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -24,6 +25,17 @@ HERE = Path(__file__).resolve().parent
 SOURCE = HERE.parent / "packs/session-workflow/shared/runtime/session.py"
 SCENARIOS = HERE / "golden/relay-scenarios.json"
 STUB = HERE / "golden/stub_worker.py"
+POLICY = """# Golden fixture
+
+## AI providers
+
+<!-- estafeta:providers:start -->
+| Provider | Allowed | Models | Notes |
+| --- | --- | --- | --- |
+| stub | consult, review, write | any | deterministic golden worker |
+| codex | consult, review, write | any | host tasks in golden scenarios |
+<!-- estafeta:providers:end -->
+"""
 
 
 class StepFailed(Exception):
@@ -104,6 +116,9 @@ class Run:
             if done.returncode:
                 raise StepFailed("git failed: " + done.stderr[-500:])
             return {"ok": True}
+        if action == "file":
+            (self.root / step["path"]).write_text(self.fill(step["text"]), encoding="utf-8")
+            return {"ok": True}
         if action == "packet":
             header = {**self.fill(step["header"]), "version": 1, "runtime": [sys.executable, str(SOURCE)]}
             text = (f"# Relay packet\n\n```relay-packet\n{json.dumps(header, indent=2)}\n```\n\n"
@@ -128,15 +143,23 @@ class Run:
                 time.sleep(0.2)
             raise StepFailed("delegation still running at the wait timeout")
         if action == "no_process":
+            # The pattern carries this run's fixture path, so other runs' processes never match.
+            pattern = self.fill(step["pattern"])
             deadline = time.monotonic() + step.get("timeout", 10)
+            if os.name == "nt":
+                query = ["powershell", "-NoProfile", "-Command",
+                         "Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine "
+                         f"-like '*{pattern}*' }} | ForEach-Object {{ $_.ProcessId }}"]
+            else:
+                query = ["pgrep", "-f", re.escape(pattern)]
             while True:  # a stopped process may need a moment to be reaped
-                done = subprocess.run(["pgrep", "-f", step["pattern"]], capture_output=True, text=True)
+                done = subprocess.run(query, capture_output=True, text=True)
                 if not done.stdout.strip() or time.monotonic() > deadline:
                     break
                 time.sleep(0.2)
             if done.stdout.strip():
                 ps = subprocess.run(["ps", "-o", "pid=,ppid=,pgid=,command=", "-p", ",".join(done.stdout.split())],
-                                    capture_output=True, text=True)
+                                    capture_output=True, text=True) if os.name != "nt" else done
                 raise StepFailed("process still running: " + (ps.stdout.strip() or done.stdout.strip()))
             return {"ok": True}
         raise StepFailed("unknown action " + action)
@@ -149,6 +172,7 @@ def fixture(base):
         subprocess.run(["git", "-C", str(root), *args], check=True)
     (root / "a.txt").write_text("a\n")
     (root / ".gitignore").write_text(".agent-state/\n")
+    (root / "PROJECT.md").write_text(POLICY, encoding="utf-8")
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
     subprocess.run(["git", "-C", str(root), "-c", "user.name=Golden", "-c", "user.email=golden@example.invalid",
                     "-c", "commit.gpgsign=false", "commit", "-qm", "fixture"], check=True)

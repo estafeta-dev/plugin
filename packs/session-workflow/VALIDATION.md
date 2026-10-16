@@ -1,5 +1,52 @@
 # Validation - estafeta 3.1.0
 
+## Relay hardening, 3.1.1 (2026-10-15)
+
+This release closes the gaps that 3.1.0 left unverified.
+
+**Live transports.** All were run with `scripts/golden/live_cli.py` or T3
+host tasks in disposable fixtures, then checked with `test_relay.py
+--live-verify`.
+
+| Transport | Model | consult-cli | write-worktree |
+| --- | --- | --- | --- |
+| `codex exec` 0.162.1, CLI | gpt-6.1-sol | PASS | PASS: sandboxed writer in a worktree, no discrepancies, integrated recheck passed |
+| Antigravity, T3 host task | gemini-3.8-flash-high | PASS | PASS: writer recorded its session and check, no discrepancies, integrated recheck passed |
+| `gemini -p` 0.64.0, CLI | none: no API key | failure mode only | not run |
+
+Without a key, `gemini -p` exits with code 41 and prints its error as JSON on
+stderr. `delegate` records the worker as exited and the result as
+`malformed`, with that exit code and stderr, never as success. A real Gemini
+CLI answer needs a paid API key, which this host does not have; Gemini models
+are verified through Antigravity instead.
+
+**Orchestrators outside T3.** A real orchestrator agent received a plain user
+request ("consult X with agent-relay") in a fixture with project-local skills
+and an AI providers table. It ran session-start, delegate start, collect and
+session-end itself. The run was checked with `--live-verify consult-cli`
+(`scripts/golden/live_orchestrator.py`).
+
+| Orchestrator | Worker | Result |
+| --- | --- | --- |
+| Claude Code `claude -p`, sonnet-5.5 | Codex via `codex exec` | PASS: 13 turns, $0.19 |
+| Codex `codex exec`, gpt-6.1-sol, workspace-write with network | Claude via `claude -p`, haiku-5.5 | PASS |
+| Claude Code, sonnet-5.5 | its Agent tool subagent (haiku), recorded as host | PASS: $0.21 |
+| Codex, gpt-6.1-sol | its `multi_agent` subagent, recorded as host | PASS: the model was not recorded, so the skill now requires `--model` |
+
+In the first run, Claude Code used the user's outdated global 2.4.1
+`session-end`, which refused the newer state untouched. The agent recovered
+with the project's runtime, and the `version` error now explains this
+shadowing.
+
+Observations from these runs, now in the adapters:
+
+- **Codex.** The user's `~/.codex/config.toml` defaulted to
+  `danger-full-access`, so the adapter's explicit `--sandbox` is mandatory.
+- **Gemini.** In an untrusted folder it lowers the approval mode, so a headless
+  writer would be read-only.
+- **Antigravity.** Its writer wrapped the result block in a fenced code
+  block; `collect` accepted it.
+
 ## Cross-provider relay, 3.1.0 (2026-10-15)
 
 macOS, Python 3.9.6, orchestrator Claude Opus 5.5 in T3 Code.

@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 permissions:
@@ -12,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python: ["3.9", "3.13"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
@@ -24,8 +25,11 @@ jobs:
       - name: Pack validation
         run: python scripts/workflow.py check
       - name: Runtime tests
+        if: success() || failure()
         run: python scripts/test_session.py
       - name: Installer tests
+        if: success() || failure()
         run: python scripts/test_workflow.py
       - name: Golden path integration tests (stub worker)
+        if: success() || failure()
         run: python scripts/test_relay.py

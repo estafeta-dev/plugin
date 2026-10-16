@@ -66,8 +66,14 @@ transfer it together with its evidence.
 
 - **Solo (default):** one writer per checkout. A new chat supersedes the earlier
   chats in the same checkout and takes over their phase claims and preview
-  servers. A chat closed without session-end therefore blocks nothing. A chat that
-  is still running a check is detected as alive, and the takeover is refused.
+  servers, so a chat closed without session-end blocks nothing for long.
+  - **No takeover of live chats.** A new chat does not take over a chat that
+    may still be working: one running a check, one that acted in the last 30
+    minutes, or one with open delegations. It joins in parallel and says so.
+    This matters in hosts such as T3 Code, where several threads share one
+    folder.
+  - **Idle threshold.** `SESSION_WORKFLOW_TAKEOVER_IDLE_MINUTES` changes the 30
+    minutes.
 - **Parallel:** tell a chat, in any language, that another agent works in the
   same folder ("work in parallel", «работаем параллельно», «pracujeme
   paralelně», «並行して作業する»), and it begins with `--parallel`. The agent goes

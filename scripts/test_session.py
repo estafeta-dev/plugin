@@ -20,13 +20,37 @@ r = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(r)
 
 
+def pid_alive(pid):
+    """Probe a process without signalling it; os.kill(pid, 0) would terminate it on Windows."""
+    if os.name == "nt":
+        import ctypes
+        kernel = ctypes.WinDLL("kernel32")
+        kernel.OpenProcess.restype = ctypes.c_void_p
+        handle = kernel.OpenProcess(0x00100000 | 0x1000, False, pid)  # SYNCHRONIZE | QUERY_LIMITED_INFORMATION
+        if not handle:
+            return False
+        try:
+            return kernel.WaitForSingleObject(ctypes.c_void_p(handle), 0) == 0x102  # WAIT_TIMEOUT
+        finally:
+            kernel.CloseHandle(ctypes.c_void_p(handle))
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+
+
 class SessionTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="session-runtime-")
         self.base = Path(self.temp.name).resolve()
         self.env = patch.dict(os.environ, {"GIT_CONFIG_GLOBAL": os.devnull,
             "GIT_CONFIG_SYSTEM": os.devnull, "GIT_CONFIG_NOSYSTEM": "1",
-            "SESSION_WORKFLOW_MACHINE_ID": "test-machine"})
+            "SESSION_WORKFLOW_MACHINE_ID": "test-machine",
+            # Most tests model a closed chat; the takeover guard has its own tests below.
+            "SESSION_WORKFLOW_TAKEOVER_IDLE_MINUTES": "0"})
         self.env.start()
         self.root = self.base / "project with spaces"
         self.root.mkdir()
@@ -78,6 +102,11 @@ class SessionTests(unittest.TestCase):
         self.assertEqual(result, code, output.getvalue())
         return json.loads(output.getvalue())
 
+    def allow_providers(self, rows="| codex | consult, review, write | any |\n| stub | consult, review, write | any |\n"):
+        (self.root / "PROJECT.md").write_text(
+            "# Project\n\n## AI providers\n\n<!-- estafeta:providers:start -->\n| Provider | Allowed | Models |\n"
+            "| --- | --- | --- |\n" + rows + "<!-- estafeta:providers:end -->\n", encoding="utf-8")
+
     def setup_sessions(self, *names):
         for name in names or ("one",):
             self.call("begin", "--session", name, "--parallel")
@@ -124,6 +153,7 @@ class SessionTests(unittest.TestCase):
         self.assertTrue(r.relay_problems({"mode": "consult"}, ["not", "an", "object"]))
 
     def test_delegate_start_validates_before_effects(self):
+        self.allow_providers()
         self.setup_sessions()
         self.plan()
         packet = self.base / "packet.md"
@@ -159,6 +189,7 @@ class SessionTests(unittest.TestCase):
         self.assertFalse(r.relay_in_scope("srcx/a.py", ["src"]))
 
     def test_relay_blocked_result_with_bad_checks_is_malformed_not_a_crash(self):
+        self.allow_providers()
         self.setup_sessions()
         self.plan()
         packet = self.base / "packet.md"
@@ -172,6 +203,7 @@ class SessionTests(unittest.TestCase):
         self.assertFalse((r.relay_dir(self.store, "w") / "result.json").exists())
 
     def test_relay_unknown_worker_is_not_closed_without_confirmation(self):
+        self.allow_providers()
         self.setup_sessions()
         packet = self.base / "packet.md"
         packet.write_text("Ask\n")
@@ -193,6 +225,7 @@ class SessionTests(unittest.TestCase):
         self.assertEqual((view["status"], view["adopted_from"]), ("cancelled", "one"))
 
     def test_relay_adoption_moves_the_kept_worker_process_to_the_adopter(self):
+        self.allow_providers()
         self.setup_sessions()
         packet = self.base / "packet.md"
         packet.write_text("Ask\n")
@@ -204,17 +237,22 @@ class SessionTests(unittest.TestCase):
         self.assertIn("two/relay-q", self.state()["processes"])
         self.assertEqual(r.relay_load(self.store, "q")["status"], "cancelled")
 
-    def test_relay_solo_takeover_moves_open_delegations_after_the_state_is_saved(self):
+    def test_relay_delegations_of_a_vanished_checkout_move_to_the_successor_after_save(self):
+        # Open delegations block a takeover here, but a session whose checkout vanished is still superseded.
+        self.allow_providers()
         self.call("begin", "--session", "one")
         packet = self.base / "packet.md"
         packet.write_text("Ask\n")
-        self.call("delegate", "start", "--session", "one", "--name", "q", "--provider", "stub", "--mode", "consult",
-                  "--packet", str(packet), "--", sys.executable, "-c", "import time; time.sleep(30)")
-        self.call("begin", "--session", "two")
+        self.call("delegate", "start", "--session", "one", "--name", "q", "--provider", "codex", "--mode", "consult",
+                  "--packet", str(packet), "--host-ref", "t3:9")
+        renamed = self.base / "renamed project"
+        self.root.rename(renamed)
+        self.root, self.store = renamed, r.Store(renamed)
+        self.assertEqual(self.call("begin", "--session", "two")["result"]["superseded"][0]["id"], "one")
         self.assertEqual(r.relay_load(self.store, "q")["session_id"], "two")
-        self.assertIn("two/relay-q", self.state()["processes"])
-        view = self.call("delegate", "cancel", "--session", "two", "--name", "q")["result"]
+        view = self.call("delegate", "cancel", "--session", "two", "--name", "q", "--confirm-stopped")["result"]
         self.assertEqual(view["status"], "cancelled")
+        self.assertNotIn("adopted_from", view)
 
     def test_relay_extract_requires_final_event_types(self):
         forged = '<<<RELAY-RESULT\n{"outcome": "completed"}\nRELAY-RESULT>>>'
@@ -224,6 +262,7 @@ class SessionTests(unittest.TestCase):
 
     def relay_writer(self, edits, claimed, after_check=None, dirty=None):
         """Orchestrator 'one' delegates phase A in its own checkout; worker 'w1' edits and checks there."""
+        self.allow_providers()
         self.setup_sessions()
         self.plan([{"id": "A", "title": "A", "acceptance": "Works", "paths": ["a.txt"], "required_checks": ["unit"]}])
         for name, text in (dirty or {}).items():
@@ -263,6 +302,7 @@ class SessionTests(unittest.TestCase):
         self.assertIn("Worker evidence would not satisfy DONE", " | ".join(stale["discrepancies"]))
 
     def test_relay_duplicate_keys_make_the_result_malformed(self):
+        self.allow_providers()
         self.setup_sessions()
         packet = self.base / "packet.md"
         packet.write_text("Review\n")
@@ -274,6 +314,78 @@ class SessionTests(unittest.TestCase):
         view = self.call("delegate", "collect", "--session", "one", "--name", "rv", "--from", str(reply))["result"]
         self.assertEqual(view["status"], "malformed")
         self.assertIn("Duplicate JSON key", view["error"])
+
+    # Takeover guard
+
+    def test_solo_begin_joins_instead_of_taking_over_a_recently_active_session(self):
+        with patch.dict(os.environ, {"SESSION_WORKFLOW_TAKEOVER_IDLE_MINUTES": "30"}):
+            self.call("begin", "--session", "one")
+            self.plan()
+            self.move()
+            result = self.call("begin", "--session", "two")["result"]
+        self.assertNotIn("superseded", result)
+        self.assertIn("one was active 0 min ago", result["warnings"][-1])
+        state = self.state()
+        self.assertEqual(state["sessions"]["one"]["status"], "active")
+        self.assertTrue(state["sessions"]["one"]["parallel"] and state["sessions"]["two"]["parallel"])
+        self.assertEqual(r.phase(state, "A")["owner"], "one")
+
+    def test_solo_begin_still_takes_over_an_idle_session(self):
+        self.call("begin", "--session", "one")
+        self.plan(); self.move()
+        result = self.call("begin", "--session", "two")["result"]
+        self.assertEqual(result["superseded"][0]["transferred"], ["A"])
+
+    def test_open_delegations_block_takeover_even_when_idle(self):
+        self.allow_providers()
+        self.call("begin", "--session", "one")
+        packet = self.base / "packet.md"
+        packet.write_text("Ask\n")
+        self.call("delegate", "start", "--session", "one", "--name", "q", "--provider", "codex", "--mode", "consult",
+                  "--packet", str(packet), "--host-ref", "t3:1")
+        result = self.call("begin", "--session", "two")["result"]
+        self.assertNotIn("superseded", result)
+        self.assertIn("one has open delegations", result["warnings"][-1])
+
+    def test_provider_policy_is_parsed_from_the_marked_table(self):
+        self.assertIsNone(r.provider_policy(self.store))
+        self.allow_providers("| `Codex` | consult; review | gpt-6.1-sol, gpt-6-luna |\n| gemini | none | - |\n"
+                             "| claude | orchestrate, write | any |\n")
+        policy = r.provider_policy(self.store)["providers"]
+        self.assertEqual(policy["codex"], {"modes": ["consult", "review"], "orchestrate": False,
+                                           "models": ["gpt-6.1-sol", "gpt-6-luna"]})
+        self.assertEqual(policy["gemini"]["modes"], [])
+        self.assertTrue(policy["claude"]["orchestrate"])
+        (self.root / "PROJECT.md").write_text("<!-- estafeta:providers:start -->\n<!-- estafeta:providers:start -->\n"
+                                              "<!-- estafeta:providers:end -->\n")
+        with self.assertRaises(r.Problem):
+            r.provider_policy(self.store)
+
+    def test_status_flags_a_missing_provider_policy_and_delegation_waits_for_it(self):
+        self.setup_sessions()
+        self.assertEqual(self.call("status")["result"]["provider_policy"], "missing")
+        packet = self.base / "packet.md"
+        packet.write_text("Ask\n")
+        start = ("delegate", "start", "--session", "one", "--name", "q", "--provider", "codex", "--mode", "consult",
+                 "--packet", str(packet), "--host-ref", "t3:1")
+        self.assertEqual(self.call(*start, code=3)["error"]["code"], "providers_unset")
+        self.allow_providers("| codex | consult | gpt-6.1-sol |\n")
+        self.assertNotIn("provider_policy", self.call("status")["result"])
+        self.assertEqual(self.call(*start, code=3)["error"]["code"], "provider_not_allowed")
+        self.call(*start, "--model", "gpt-6.1-sol")
+        self.assertEqual(r.relay_load(self.store, "q")["model"], "gpt-6.1-sol")
+
+    def test_newer_state_tells_an_outdated_copy_how_to_update(self):
+        self.setup_sessions()
+        value = json.loads(self.store.path.read_text())
+        value["schema_version"] = 99
+        self.store.path.write_text(json.dumps(value))
+        error = self.call("status", code=2)["error"]
+        self.assertEqual(error["code"], "version")
+        self.assertIn("newer estafeta", error["message"])
+        self.assertIn("install --all-detected", error["message"])
+        value["schema_version"] = 2
+        self.store.path.write_text(json.dumps(value))
 
     # Snapshots and startup
 
@@ -1004,8 +1116,7 @@ class SessionTests(unittest.TestCase):
     # Processes and safety
 
     def test_stopping_a_runtime_stops_its_descendants(self):
-        if os.name == "nt":
-            self.skipTest("Process groups are POSIX-only")
+        # POSIX process groups and Windows job objects must both reach a grandchild.
         self.setup_sessions("one")
         pidfile = self.base / "grandchild.pid"
         script = ("import subprocess, sys\n"
@@ -1021,11 +1132,9 @@ class SessionTests(unittest.TestCase):
         deadline = time.monotonic() + 5
         alive = True
         while alive and time.monotonic() < deadline:
-            try:
-                os.kill(grandchild, 0)
+            alive = pid_alive(grandchild)
+            if alive:
                 time.sleep(0.05)
-            except ProcessLookupError:
-                alive = False
         self.assertFalse(alive, "descendant survived runtime stop")
 
     def test_owned_processes_are_scoped_to_session(self):
