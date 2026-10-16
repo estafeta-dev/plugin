@@ -16,8 +16,15 @@ Do not publish credentials, local runtime state, or personal logs.
 
 ## Current focus
 
-- Multi-provider relay (3.1.0): skill `agent-relay` and runtime `delegate`; see docs/plans/multi-provider.md.
-- On another computer, follow docs/CONTINUING.md, then use session-start.
+- 3.1.0 (multi-provider relay) is merged to main. Release 3.2.0 is in progress
+  on branch `relay-hardening-3.1.1`, draft PR #5 to main (plan:
+  docs/plans/relay-hardening.md). PR #4 was merged only into the stale base
+  branch `agent-relay-3.1.0`, not into main.
+- Paused 2026-10-15. Next: fix the 11 findings of Codex review round 3 (R4).
+- On another computer, follow docs/CONTINUING.md with branch
+  `relay-hardening-3.1.1` instead of `main`, then use session-start. The
+  runtime state stays on the first computer: import the open phases R4 and R5
+  from the plan there.
 
 ## AI providers
 

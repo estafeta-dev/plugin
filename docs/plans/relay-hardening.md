@@ -113,3 +113,52 @@
 - Acceptance: 3.2.0 is consistent everywhere, and the "Not verified" list
   holds only items with a concrete reason.
 - Checks: `pack-check`, `unit-workflow`, `unit-session`, `golden-relay`.
+
+## Status at pause (2026-10-15)
+
+- **DONE with recorded checks:**
+  - R1: Windows CI, green on PR #5 at 29fb17e (closed 2026-10-16);
+  - R2: live `codex exec`;
+  - R3: Antigravity through T3, Gemini CLI failure mode;
+  - R6: provider policy and first-use question;
+  - R7: takeover guard;
+  - R8: orchestrators in Claude Code and Codex, plus native subagents.
+- **R4 is open.** Codex review round 3 (`review-codex-3`, gpt-6.1-sol)
+  returned CHANGES_REQUIRED.
+  - Round 2 items: R2-1 and R2-5 are closed. R2-2, R2-3 and R2-4 are
+    partially open (items 6, 8 and 9 below).
+  - Each finding below needs a failing test, then a fix:
+    1. **High.** The policy parser reads rows inside code blocks and comments,
+       and a duplicate ID overrides an earlier row (a `claude-pricefx` none row
+       can become write). Reject duplicates and ignore commented or fenced
+       rows.
+    2. An empty or missing model cell counts as any model. Require an explicit
+       `any`.
+    3. **High.** The Windows job is assigned after the child starts. Put the
+       supervisor itself in the job before spawning, and fail loudly when
+       assignment fails.
+    4. **High.** A nested delegation B escapes parent A's stop: B has a separate
+       process group and overwrites the inherited stop-file path. Chain the
+       stop requests (watch the parent's file too) and stop child supervisors
+       transitively.
+    5. The stop sequence blocks heartbeats for about 13 s, past the 10 s
+       expiry, so cancel reports unknown during a valid stop. Keep beating
+       while stopping.
+    6. An explicit `type: null` is treated as absent. Require the key to be
+       absent for a Gemini `response`.
+    7. Duplicate keys in JSON/JSONL envelopes are resolved silently. Parse
+       envelopes with `object_pairs`.
+    8. **High.** For a host writer recorded late, its early edits are absorbed
+       into the baseline. Record the baseline before launching the host task,
+       or flag late recording without a baseline.
+    9. A removed worker worktree skips freshness and log validation silently.
+       Report it as a discrepancy.
+    10. A `runtime-prepared:<name>` event is not attributed in
+        `last_activity`. Attribute runtime launches to their session.
+    11. `live_orchestrator.py` passes even if the orchestrator failed, did not
+        end its session or left workers running, and it does not check the
+        requested provider, model or transport. Tighten it.
+- **Then:** rerun the suites, the affected golden paths and the live paths
+  touched (orchestrators, Windows CI). Have Codex re-review the fix delta.
+  After that, R5 releases 3.2.0 and PR #5 becomes ready for review.
+
