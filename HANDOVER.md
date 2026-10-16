@@ -4,8 +4,9 @@
 
 3.1.0 (`agent-relay` and runtime `delegate`) is merged to main through PR #3.
 
-Release 3.2.0 is in progress on branch `relay-hardening-3.1.1` (draft PR #5 to
-main; plan docs/plans/relay-hardening.md). Done so far:
+The 3.2.0 work (plan docs/plans/relay-hardening.md) was merged to main through
+PR #5 on October 16, but 3.2.0 is not released: the version still reads 3.1.0
+and the review findings below are open. Work continues on `main`. Done so far:
 
 - **Windows.** Supported and verified in CI. Fixed: index file modes in
   fingerprints, job-object supervision, and a file-based stop request for
@@ -25,15 +26,11 @@ main; plan docs/plans/relay-hardening.md). Done so far:
 - **Drivers.** `scripts/golden/live_cli.py` and `live_orchestrator.py` replay
   the live golden paths.
 
-PR #4 was merged only into its stale base branch `agent-relay-3.1.0`, so its
-commits are not in main. PR #5 carries them.
-
 ## Next action
 
-The work moves to another computer. There, follow docs/CONTINUING.md with
-branch `relay-hardening-3.1.1` instead of `main`, and use session-start. The
-runtime state (phases, checks, the delegation ledger) stays on this computer,
-so import the open phases R4 and R5 from the plan.
+The work moves to another computer. There, follow docs/CONTINUING.md and use
+session-start. The runtime state (phases, checks, the delegation ledger) stays
+on this computer, so import the open phases R4 and R5 from the plan.
 
 Then fix the 11 findings of Codex review round 3. They are listed in
 docs/plans/relay-hardening.md, "Status at pause". Start with the
@@ -45,8 +42,7 @@ high-severity ones:
 4. the late-recorded host writer baseline.
 
 Add a failing test for each, then rerun the suites and the affected live
-paths. Have Codex re-review the fix delta. Then release 3.2.0 (R5) and mark PR
-#5 ready.
+paths. Have Codex re-review the fix delta. Then release 3.2.0 (R5).
 
 ## Validation
 
@@ -68,14 +64,15 @@ On October 15, 2026, on macOS with Python 3.9.6:
 - **Machine-local:** the runtime state and the live-run fixtures under the
   temp directory stay on the first computer. VALIDATION.md keeps the live
   evidence.
-- **Installs:** the global estafeta skills in the provider profiles are outdated
-  (2.4.1 or missing). Update them with `python3 scripts/workflow.py install
-  --all-detected` when convenient.
+- **Installs:** on this computer every detected provider profile carries the
+  skills from main at c373020 (October 16, `status` all MATCH). Other
+  computers are not updated yet: run `python3 scripts/workflow.py install
+  --all-detected` there.
 
 <!-- session-workflow:facts:start -->
 ## Session facts (generated)
 
-State revision 162; HEAD 29fb17eaebe23d48326a73ee436093ce841035ab.
+State revision 164; HEAD c3730202691f656b19d8e16cfa39c4162cdf0996.
 
 | Phase | State | Owner | Latest checks |
 | --- | --- | --- | --- |
@@ -94,7 +91,7 @@ State revision 162; HEAD 29fb17eaebe23d48326a73ee436093ce841035ab.
 | R8 | DONE | - | live-orchestrators: pass (executed, inputs match) |
 
 Active sessions: none.
-Ended sessions: 10; latest s-transfer-1016 (next: On another computer: follow docs/CONTINUING.md with branch relay-hardening-3.1.1, use session-start, import open phases R4 and R5 from docs/plans/relay-hardening.md, then fix the 11 Codex review round 3 findings (high severity first, each with a failing test), have Codex re-review the fix delta, release 3.2.0 (R5) and mark PR #5 ready).
+Ended sessions: 11; latest s-22b1f0e8 (next: On another computer: follow docs/CONTINUING.md (branch main), use session-start, import open phases R4 and R5 from docs/plans/relay-hardening.md, then fix the 11 Codex review round 3 findings (high severity first, each with a failing test), have Codex re-review the fix delta and release 3.2.0 (R5)).
 
 Generated facts do not establish acceptance, explain intent or prove delivery.
 <!-- session-workflow:facts:end -->

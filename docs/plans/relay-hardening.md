@@ -21,8 +21,9 @@
   - Pushes to a stacked branch with its own PR on top of #3.
 - Constraints: same as the 3.1.0 plan. Store no secrets, never use
   sandbox-bypass flags, and keep state schema 2.
-- Base: `agent-relay-3.1.0` @ 5b3fb8a (PR #3, open). Branch
-  `relay-hardening-3.1.1`.
+- Base: `agent-relay-3.1.0` @ 5b3fb8a (PR #3). Branch
+  `relay-hardening-3.1.1`, merged to main through PR #5 on 2026-10-16. The
+  remaining phases continue on `main`.
 
 ## Decisions
 
@@ -160,5 +161,5 @@
         requested provider, model or transport. Tighten it.
 - **Then:** rerun the suites, the affected golden paths and the live paths
   touched (orchestrators, Windows CI). Have Codex re-review the fix delta.
-  After that, R5 releases 3.2.0 and PR #5 becomes ready for review.
+  After that, R5 releases 3.2.0 (PR #5 is already merged).
 
