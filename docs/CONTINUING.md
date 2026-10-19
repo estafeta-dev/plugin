@@ -1,13 +1,13 @@
 # Continue on another computer
 
-The shared source of truth is https://github.com/pashbel/estafeta, branch `main`.
+The shared source of truth is https://github.com/estafeta-dev/plugin, branch `main`.
 Git transfers source and handover documents. Installed agent skills, credentials,
 and the ignored `.agent-state/` runtime are local to each computer.
 
 For a new checkout:
 
 ```sh
-git clone https://github.com/pashbel/estafeta.git
+git clone https://github.com/estafeta-dev/plugin.git estafeta
 cd estafeta
 ```
 

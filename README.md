@@ -37,7 +37,7 @@ others) and Python 3.9+.
 ### ![Option 1. Ask your agent](packs/session-workflow/assets/headings/option-1-ask-your-agent.svg)
 
 ```text
-Install estafeta from https://github.com/pashbel/estafeta
+Install estafeta from https://github.com/estafeta-dev/plugin
 for this agent: follow "Agent installation" in docs/INSTALL.md.
 I authorize its installer to install and replace the estafeta skills
 in this agent's skills directory, with backups.
@@ -52,7 +52,7 @@ Without it, a guarded agent such as Claude Code in auto mode stops before
 ### ![Option 2. Use the terminal](packs/session-workflow/assets/headings/option-2-use-the-terminal.svg)
 
 ```sh
-git clone https://github.com/pashbel/estafeta.git
+git clone https://github.com/estafeta-dev/plugin.git estafeta
 cd estafeta
 python3 scripts/workflow.py install --all-detected
 ```

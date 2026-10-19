@@ -5,7 +5,7 @@ standard library. Native plugin installation also requires a host that supports
 that plugin format. The repository is public, so cloning needs no login.
 
 ```sh
-git clone https://github.com/pashbel/estafeta.git
+git clone https://github.com/estafeta-dev/plugin.git estafeta
 cd estafeta
 python3 scripts/workflow.py check
 ```
@@ -24,7 +24,7 @@ language.
    terminal and file access, say so before installing anything.
 2. **Python.** Find Python 3.9+: `python3`, `python` or `py -3`.
 3. **Source.** Reuse an existing clone and update it only by fast-forward.
-   Otherwise run `git clone https://github.com/pashbel/estafeta.git`
+   Otherwise run `git clone https://github.com/estafeta-dev/plugin.git estafeta`
    into a stable user directory outside any skills directory. No login is needed.
 4. **Route.** If this profile already has the native plugin, update it through
    the host instead of adding a copy. Otherwise use the portable route below.
@@ -108,7 +108,7 @@ project settings.
   "autoMode": {
     "allow": [
       "$defaults",
-      "Installing or updating the estafeta skill pack (github.com/pashbel/estafeta) with its own `scripts/workflow.py install` and `status` into ~/.claude/skills is allowed: the installer backs up replaced skills."
+      "Installing or updating the estafeta skill pack (github.com/estafeta-dev/plugin) with its own `scripts/workflow.py install` and `status` into ~/.claude/skills is allowed: the installer backs up replaced skills."
     ]
   }
 }
@@ -123,7 +123,7 @@ The repo contains an OpenAI marketplace catalog, a portable `plugin.json`, and a
 Codex compatibility manifest. On a CLI with the plugin commands below:
 
 ```sh
-codex plugin marketplace add pashbel/estafeta
+codex plugin marketplace add estafeta-dev/plugin
 codex plugin add estafeta@pashbel-estafeta
 codex plugin list --marketplace pashbel-estafeta --json
 ```
@@ -137,7 +137,7 @@ See [OpenAI packaging documentation](https://developers.openai.com/plugins/build
 ## Claude Code plugin
 
 ```sh
-claude plugin marketplace add pashbel/estafeta
+claude plugin marketplace add estafeta-dev/plugin
 claude plugin install estafeta@pashbel-estafeta
 claude plugin details estafeta
 ```

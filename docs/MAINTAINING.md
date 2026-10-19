@@ -1,6 +1,6 @@
 # Maintenance
 
-Canonical source: [pashbel/estafeta](https://github.com/pashbel/estafeta).
+Canonical source: [estafeta-dev/plugin](https://github.com/estafeta-dev/plugin).
 The plugin's public name is **estafeta**, its native plugin ID is `estafeta`,
 and its marketplace ID is `pashbel-estafeta`.
 
@@ -51,7 +51,7 @@ Native Windows/Linux execution must be validated separately from the macOS runs.
 
 ## Naming compatibility
 
-The source repository is `pashbel/estafeta`; the internal `packs/session-workflow`
+The source repository is `estafeta-dev/plugin`; the internal `packs/session-workflow`
 path retains its existing name. Keep the `workflow-pack: session-workflow` ownership marker, installation
 receipt and backup paths, `.agent-state/session-workflow` state directory,
 handover markers and machine-ID hash prefix compatible with earlier versions.

@@ -5,8 +5,8 @@
   "author": {
     "name": "pashbel"
   },
-  "repository": "https://github.com/pashbel/estafeta",
-  "homepage": "https://github.com/pashbel/estafeta",
+  "repository": "https://github.com/estafeta-dev/plugin",
+  "homepage": "https://github.com/estafeta-dev/plugin",
   "skills": "./skills/",
   "interface": {
     "displayName": "estafeta",
@@ -18,7 +18,7 @@
       "Read",
       "Write"
     ],
-    "websiteURL": "https://github.com/pashbel/estafeta",
+    "websiteURL": "https://github.com/estafeta-dev/plugin",
     "defaultPrompt": [
       "Use session-guide to learn how estafeta works.",
       "Use session-start to resume this project.",
